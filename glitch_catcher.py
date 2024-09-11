@@ -22,6 +22,8 @@ async def glitch_catcher_fanduel(markets, match, uuIDs):
             data_set = re.search(r"Set \d|Final", item)
             if data_set and sets.index(data_set.group()) < sets.index(current_sofascore_set):
                 glitches_sofascore.append(item)
+    else:
+        print("No match found for sofascore")
         
     if scores365_uuID != '':
         scores365_table = db.table("live_matches").select("*").eq("uuID", scores365_uuID).execute()
@@ -31,6 +33,8 @@ async def glitch_catcher_fanduel(markets, match, uuIDs):
             data_set = re.search(r"Set \d|Final", item)
             if data_set and sets.index(data_set.group()) < sets.index(current_scores365_set):
                 glitches_scores365.append(item)
+    else:
+        print("No match found for 365scores")
 
     if len(glitches_sofascore) == 0 and len(glitches_scores365) == 0:
         print("No glitches found.")

@@ -2,10 +2,13 @@ import pytz
 import asyncio
 import scores
 import scrapers
+from loguru import logger
 from constants import Site
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 scheduler = AsyncIOScheduler()
+logger.add("arbitrages.log", filter=lambda record: "arbitrage" in record["extra"], rotation="2 weeks")
+logger.add("glitches.log", filter=lambda record: "arbitrage" in record["extra"], rotation="2 weeks")
 
 async def running():
     tasks = [
