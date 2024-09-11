@@ -9,6 +9,8 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 scheduler = AsyncIOScheduler()
 logger.add("arbitrages.log", filter=lambda record: "arbitrage" in record["extra"], rotation="2 weeks")
 logger.add("glitches.log", filter=lambda record: "arbitrage" in record["extra"], rotation="2 weeks")
+logger.add("info.log", level="INFO", rotation="2 weeks")
+logger.add("errors.log", level="WARNING", rotation="2 weeks")
 
 async def running():
     tasks = [

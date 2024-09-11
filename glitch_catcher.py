@@ -2,13 +2,12 @@ import re
 from db import db
 from constants import Site
 from notifier import glitch_notifier
+from loguru import logger
 
 async def glitch_catcher_fanduel(markets, match, uuIDs):
     print(f"RUNNING GLITCH CATCHER 👾 - {Site.FANDUEL.value}")
     sets = ["Set 1", "Set 2", "Set 3", "Set 4", "Set 5", "Final"]
     data = markets
-    print(match)
-    print(data)
     glitches_sofascore = []
     glitches_scores365 = []
     sofacore_uuID = uuIDs[0]['uuID']['SOFASCORE']
@@ -37,17 +36,18 @@ async def glitch_catcher_fanduel(markets, match, uuIDs):
         print("No match found for 365scores")
 
     if len(glitches_sofascore) == 0 and len(glitches_scores365) == 0:
-        print("No glitches found.")
+        logger.bind(arbitrage=True).info(f'No glitches found for match: {match}')
 
     if len(glitches_sofascore) > 0:
-        print("Glitches found for sofascore!")
         print(glitches_sofascore)
+        logger.bind(arbitrage=True).info(f'Glitches found! for match: {match} {glitches_sofascore} reference: {Site.SCORES365.value}')
         await glitch_notifier(glitches_sofascore, current_sofascore_set, Site.FANDUEL.value, "Sofascore")
 
     if len(glitches_scores365) > 0:
-        print("Glitches found for 365scores!")
-        print(glitches_scores365)
+        logger.bind(arbitrage=True).info(f'Glitches found! for match: {match} {glitches_scores365} reference: {Site.SCORES365.value}')
         await glitch_notifier(glitches_scores365, current_scores365_set, Site.FANDUEL.value, "365Scores")
+
+    
 
 
 

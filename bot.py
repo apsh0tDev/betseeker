@@ -13,7 +13,7 @@ from schedule import get_schedule
 
 #---- Init
 load_dotenv()
-current_branch = "DEV"
+current_branch = "PROD"
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)

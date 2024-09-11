@@ -15,7 +15,7 @@ async def clean(data, table, source):
 
 async def clean_schedule(data):
     print(f"Run cleaners for schedule")
-    table = db.table("schedule").select("*").eq.execute()
+    table = db.table("schedule").select("*").execute()
     ids = [int(item['match_id']) for item in table.data]
 
     for record_id in ids:
