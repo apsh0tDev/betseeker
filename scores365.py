@@ -2,7 +2,7 @@ import json
 import shortuuid
 from rich import print
 from constants import Site
-from cleaners import clean
+from cleaners import clean, clean_schedule
 from db_actions import exists, update, upload
 
 live_sets = ["Set 1", "Set 2", "Set 3", "Set 4", "Set 5"]
@@ -58,10 +58,26 @@ async def tidy_up_365scores(data):
             print(res_match)
             print(res_score)
 
+    #--- Scheduled matches
+    await handle_schedule(matches_to_schedule)
     await clean(data=matches_ids, table="live_matches", source=Site.SCORES365.value)
 
+#--- Handle schedule 📆
+async def handle_schedule(matches):
+    for match in matches:
+        info = await set_schedule_info(match)
+        to_match = { "match_name" : info['match_name'], "match_id" : info['match_id'] }
+        match_exists = await exists(table="schedule", to_match=to_match)
+        if match_exists:
+            print("Match exists, skip")
+        else:
+            response = await upload(table="schedule", info=info)
+            print(response)
+    
+    matches_ids = [item['id'] for item in matches]
+    await clean_schedule(data=matches_ids)
 
-#-- Utils
+#--- Utils
 async def get_match_info(match, competitions):
     current_sets = ["Set 1", "Set 2", "Set 3", "Set 4", "Set 5", "Final"]
 
@@ -99,3 +115,23 @@ async def get_team_score(stages, team):
             if item[team] >= 0:
                 team_arr.append(str(round(item[team])))
     return team_arr
+
+async def get_players_names(match):
+    teamA = match['homeCompetitor']['name'] if match['homeCompetitor']['name'] else "Unknown"
+    teamB = match['awayCompetitor']['name'] if match['awayCompetitor']['name'] else "Unknown"
+    return [teamA, teamB]
+
+async def set_schedule_info(game):
+    players = await get_players_names(game)
+    match_info = {
+        "match_id" : game['id'],
+        "match_name" : f"{players[0]} vs {players[1]}",
+        "tournament" : game['competitionDisplayName'],
+        "tournament_display_name" : game['competitionDisplayName'],
+        "date" : game['startTime'],
+        "teamA" : players[0].strip(),
+        "teamB" : players[1].strip()
+    }
+
+    return match_info
+
