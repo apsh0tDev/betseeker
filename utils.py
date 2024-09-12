@@ -1,5 +1,9 @@
+import re
 import pytz
+from db import db
+from thefuzz import fuzz
 from datetime import datetime
+from constants import Site
 
 def get_current_ny_time():
     # Define New York timezone
@@ -22,3 +26,23 @@ def format_datetime(input_datetime_str):
     time_str = input_datetime.strftime("%I:%M %p")
 
     return f"{day_str} - {time_str}"
+
+def remove_parentheses(text):
+    return re.sub(r'\([^)]*\)', '', text)
+
+async def get_uuID(match):
+    print(f"Getting uuID for {match}")
+
+    sofa_uuID = ''
+    scores365_uuID = ''
+
+    matches = db.table("live_matches").select("*").execute()
+    for item in matches.data:
+        fuzz_ratio = fuzz.token_sort_ratio(item['match_name'], match)
+        if fuzz_ratio >= 70:
+            if item['source'] == Site.SOFASCORE.value:
+                sofa_uuID = item['uuID']
+            elif item['source'] == Site.SCORES365.value:
+                scores365_uuID = item['uuID']
+
+    return sofa_uuID, scores365_uuID

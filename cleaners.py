@@ -6,7 +6,6 @@ async def clean(data, table, source):
     table_name = table
     table = db.table(table).select("*").eq("source", source).execute()
     ids = [int(item['match_id']) for item in table.data]
-
     for record_id in ids:
         if record_id not in data:
             logger.info(f"Deleting {record_id} from {table_name} table")

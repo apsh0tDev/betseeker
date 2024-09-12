@@ -3,8 +3,9 @@ from constants import Site
 from rich import print
 from thefuzz import fuzz
 from cleaners import clean
-from db_actions import exists, update, upload
+from utils import get_uuID
 from glitch_catcher import glitch_catcher_fanduel
+from db_actions import exists, update, upload, db_actions
 
 async def tidy_up_matches(load, sport):
     print("FANDUEL", sport)
@@ -52,18 +53,58 @@ async def handle_markets(load, sport):
         event_key = [key for key in load['attachments']['events']]
         match_name = load['attachments']['events'][event_key[0]]['name']
         eventId = load['attachments']['events'][event_key[0]]['eventId']
-
+        players = extract_players(load['attachments']['events'][event_key[0]]['name'])
+        event = load['attachments']['events'][event_key[0]]
         if 'markets' in load['attachments']:
             markets = load['attachments']['markets']
             markets_keys = [key for key in markets]
             for key in markets_keys:
                 market = markets[key]
                 market_names.append(market['marketName'])
+                await market_sorter(event, market, players, match_name)
 
         uuIDs = db.table("matches_list").select("*").eq("match_id", eventId).execute()
         await glitch_catcher_fanduel(market_names, match_name, uuIDs.data)
     
+async def market_sorter(event, market, players, match_name):
+    market_name = market['marketName']
+    print(market_name)
+    match market_name:
+        case "Set 1 Winner":
+            await regular_odds(
+                event=event,
+                players=players,
+                match_name=match_name,
+                table="set_one_winner",
+                market=market
+            )
+        case "Set 2 Winner":
+            await regular_odds(
+                event=event,
+                players=players,
+                match_name=match_name,
+                table="set_two_winner",
+                market=market
+            )
+        case "Set 3 Winner":
+            await regular_odds(
+                event=event,
+                players=players,
+                match_name=match_name,
+                table="set_three_winner",
+                market=market
+            )
 
+#----- Markets
+async def regular_odds(event, players, match_name, table, market):
+    print(table)
+    info = await set_default_info(event=event, match_name=match_name)
+    info['isOpen'] = True if market['marketStatus'] == "OPEN" else False
+    info['teamA'] = { "name" : players[0], "odds" : await set_default_odds(market['runners'], 0) }
+    info['teamB'] = { "name" : players[1], "odds" : await set_default_odds(market['runners'], 1) }
+
+    to_match, to_update = await get_default_options(info)
+    await db_actions(to_match=to_match, to_update=to_update, info=info, table=table)
 
 # -- Utils
 def find_value(id, group):
@@ -75,19 +116,32 @@ def find_value(id, group):
 def extract_players(matchup):
     return matchup.split(" v ")
 
-async def get_uuID(match):
-    print(f"Getting uuID for {match}")
+async def set_default_info(event, match_name):
+    info = {
+        "match_id" : event['eventId'],
+        "match_name" : match_name,
+        "source" : Site.FANDUEL.value
+    }
+    return info
 
-    sofa_uuID = ''
-    scores365_uuID = ''
+async def set_default_odds(odds, team_number):
+    win_runner_odds = odds[team_number].get('winRunnerOdds')
+    if win_runner_odds:
+        american_odds = win_runner_odds.get('americanDisplayOdds', {}).get('americanOdds')
+        decimal_odds = win_runner_odds.get('trueOdds', {}).get('decimalOdds', {}).get('decimalOdds')
+        if decimal_odds is not None:
+            decimal_odds = round(decimal_odds, 2)
+    else:
+        american_odds = None
+        decimal_odds = None
 
-    matches = db.table("live_matches").select("*").execute()
-    for item in matches.data:
-        fuzz_ratio = fuzz.token_sort_ratio(item['match_name'], match)
-        if fuzz_ratio >= 70:
-            if item['source'] == Site.SOFASCORE.value:
-                sofa_uuID = item['uuID']
-            elif item['source'] == Site.SCORES365.value:
-                scores365_uuID = item['uuID']
+    return {
+        "americanOdds": american_odds,
+        "decimalOdds" : decimal_odds
+    }
 
-    return sofa_uuID, scores365_uuID
+async def get_default_options(info):
+    to_match = { "match_name" : info['match_name'], "match_id" : info['match_id'], "source" : Site.FANDUEL.value }
+    to_update = { "teamA" : info['teamA'], "teamB" : info['teamB'], "isOpen": info['isOpen']}
+
+    return to_match, to_update

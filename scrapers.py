@@ -1,22 +1,31 @@
 import bs4
 import json
 import asyncio
+import betmgm
 import fanduel
 import constants
 from db import db
 from rich import print
 from thefuzz import fuzz
 from loguru import logger
-from verifier import verifier_alt
+from constants import Site
+from verifier import verifier_alt, verifier
 from db_actions import exists, upload
-from connection import scrape_by_site
+from connection import scrape_by_site, scrape
 
 async def scrape_data(site, useProxy, sport):
     url = await get_url(site, sport)
+    print(url)
     response = ''
     if useProxy:
         response = await scrape_by_site(url, constants.Site.FANDUEL.value, True)
-    
+    else:
+        data = {
+            'cmd' : 'request.get',
+            'url' : url,
+            'requestType' : 'request'
+        }
+        response = await scrape(data, Site.BETMGM.value)
     if response != None and response != '':
         if useProxy:
             is_valid = await verifier_alt(response)
@@ -26,9 +35,14 @@ async def scrape_data(site, useProxy, sport):
                 load = json.loads(pre.text)
                 await handle_load(load, site, sport)
             else:
-                print("Invalid response, try again")
+                print("Invalid response, try again")  
         else:
-            print("...")
+            is_valid = await verifier(response)
+            if is_valid:
+                load = json.loads(response['solution']['response'])
+                await handle_load(load, site, sport)
+            else:
+               print("Invalid response, try again") 
     else:
         print("None response, try again")
 
@@ -72,6 +86,13 @@ async def scrape_event(id, site, useProxy, sport):
     response = ''
     if useProxy:
         response = await scrape_by_site(url, constants.Site.FANDUEL.value, True)
+    else:
+        data = {
+            'cmd' : 'request.get',
+            'url' : url,
+            'requestType' : 'request'
+        }
+        response = await scrape(data, constants.Site.BETMGM.value)
     
     if response != None and response != '':
         if useProxy:
@@ -86,7 +107,14 @@ async def scrape_event(id, site, useProxy, sport):
                 print("Invalid response, try again")
                 return "ERROR"
         else:
-            print("...")
+            is_valid = await verifier(response)
+            if is_valid:
+                load = json.loads(response['solution']['response'])
+                await handle_markets_load(load, site, sport)
+                return "DONE"
+            else:
+                print("Invalid response, try again")
+                return "ERROR"                
     else:
         print("None response, try again")
         return "ERROR"
@@ -97,11 +125,15 @@ async def handle_load(load, site, sport):
     match site:
         case "FANDUEL":
             await fanduel.tidy_up_matches(load, sport)
+        case "BETMGM":
+            await betmgm.tidy_up_matches(load, sport)
 
 async def handle_markets_load(load, site, sport):
     match site:
         case "FANDUEL":
             await fanduel.handle_markets(load, sport)
+        case "BETMGM":
+            await betmgm.handle_markets(load, sport)
 
 
 #--- Utils
@@ -111,6 +143,9 @@ async def get_url(site, sport):
         case "FANDUEL":
             if sport == "tennis":
                 url = constants.fanduel_live_url.format(eventTypeID=2)
+        case "BETMGM":
+            if sport == "tennis":
+                url = constants.betmgm_url.format(sportId=5)
     return url
 
 async def get_event_url(site, sport, task_id):
@@ -119,7 +154,9 @@ async def get_event_url(site, sport, task_id):
         case "FANDUEL":
             if sport == "tennis":
                 url = constants.fanduel_event_url.format(id=task_id, tab="all")
+        case "BETMGM":
+            url = constants.betmgm_events.format(id=task_id)
     return url
 
 if __name__ == "__main__":
-    asyncio.run(scrape_data(constants.Site.FANDUEL.value, True, "tennis"))
+    asyncio.run(scrape_events(constants.Site.FANDUEL.value, True, "tennis"))
