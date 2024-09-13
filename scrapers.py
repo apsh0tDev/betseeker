@@ -25,7 +25,7 @@ async def scrape_data(site, useProxy, sport):
             'url' : url,
             'requestType' : 'request'
         }
-        response = await scrape(data, Site.BETMGM.value)
+        response = await scrape(data, site)
     if response != None and response != '':
         if useProxy:
             is_valid = await verifier_alt(response)
@@ -82,7 +82,7 @@ async def scrape_events(site, useProxy, sport):
         logger.info(f"No tasks for {site} at the moment.")
 
 async def scrape_event(id, site, useProxy, sport):
-    url = await get_event_url(site, sport, id)
+    url = await get_url(site=site, sport=sport, isEvent=True, task_id=id)
     response = ''
     if useProxy:
         response = await scrape_by_site(url, constants.Site.FANDUEL.value, True)
@@ -127,6 +127,8 @@ async def handle_load(load, site, sport):
             await fanduel.tidy_up_matches(load, sport)
         case "BETMGM":
             await betmgm.tidy_up_matches(load, sport)
+        case "POINTSBET":
+            print(load)
 
 async def handle_markets_load(load, site, sport):
     match site:
@@ -137,7 +139,7 @@ async def handle_markets_load(load, site, sport):
 
 
 #--- Utils
-async def get_url(site, sport):
+async def get_url(site, sport, isEvent=False, isCompetition=False, task_id=''):
     url = ''
     match site:
         case "FANDUEL":
@@ -148,15 +150,5 @@ async def get_url(site, sport):
                 url = constants.betmgm_url.format(sportId=5)
     return url
 
-async def get_event_url(site, sport, task_id):
-    url = ''
-    match site:
-        case "FANDUEL":
-            if sport == "tennis":
-                url = constants.fanduel_event_url.format(id=task_id, tab="all")
-        case "BETMGM":
-            url = constants.betmgm_events.format(id=task_id)
-    return url
-
 if __name__ == "__main__":
-    asyncio.run(scrape_events(constants.Site.FANDUEL.value, True, "tennis"))
+    asyncio.run(scrape_data(constants.Site.DRAFTKINGS.value, False, "tennis"))

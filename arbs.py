@@ -13,46 +13,24 @@ async def call_all_markets():
     tasks = []
     for market in available_markets:
         tasks.append(get_market(market))
-    
     asyncio.gather(*tasks)
 
-async def get_market(marke_name):
-    match marke_name:
-        case "SET_ONE_WINNER":
-            await set_winner("Set 1 Winner")
-        case "SET_TWO_WINNER":
-            await set_winner("Set 2 Winner")
-        case "SET_THREE_WINNER":
-            await set_winner("Set 3 Winner")
-        case "MATCH_WINNER":
-            await match_winner()
+async def get_market(market_name):
+    regular_types = ["SET_ONE_WINNER", "SET_TWO_WINNER", "SET_THREE_WINNER", "MATCH_WINNER"]
 
-async def set_winner(set_name):
-    if set_name == "Set 1 Winner":
-        table = "set_one_winner"
-    elif set_name == "Set 2 Winner":
-        table = "set_two_winner"
-    elif set_name == "Set 3 Winner":
-        table = "set_three_winner"
+    if market_name in regular_types:
+        await regular_odds(market_name)
+
+async def regular_odds(market_name):
+    table = market_name.lower()
     response = db.table(table).select("*").execute()
-    
-    #Group matches by name for later comparison
     groups = await group_matches(response.data)
-    arbitrages = await calculate_arbitrage(odds=groups, market=set_name)
-
-    if len(arbitrages) > 0:
-        await db_actions(arbitrages)
-
-async def match_winner():
-    response = db.table("match_winner").select("*").execute()
-     #Group matches by name for later comparison
-    groups = await group_matches(response.data)
-
     arbitrages = await calculate_arbitrage(odds=groups, market="Match Winner")
     if len(arbitrages) > 0:
+        print("ARBITRAGES: ")
+        print(arbitrages)
         await db_actions(arbitrages)
 
-#======== Utils
 async def group_matches(matches, similarity_threshold=70):
     grouped_matches = []
 
@@ -61,7 +39,7 @@ async def group_matches(matches, similarity_threshold=70):
         match_name = match['match_name']
         # Try to find an existing group that this match is similar to
         for group in grouped_matches:
-            if fuzz.token_sort_ratio(match_name, group['match_name']) >= similarity_threshold:
+            if fuzz.partial_token_sort_ratio(match_name, group['match_name']) >= similarity_threshold:
                 group['odds'].append({
                     'source': match['source'],
                     'teamA': match['teamA'],
@@ -129,7 +107,7 @@ async def calculate_arbitrage(odds, market):
                     'match_name': match_name.strip(),
                     'teamA': best_odds_teamA,
                     'teamB': best_odds_teamB,
-                    'arbitrage_percentage': (1 - total_inverse) * 100,
+                    'arbitrage_percentage': (1 / total_inverse - 1) * 100,
                     'market' : market_name
                 }
                 arbitrages.append(arbitrage_opportunity)
@@ -146,7 +124,6 @@ async def check_arbitrages():
 
     for arbitrage in arbs_table:
         created_at = datetime.fromisoformat(arbitrage['created_at'].replace('Z', '+00:00'))
-        arbitrage_percentage = float(arbitrage['arbitrage_percentage'])
         if created_at > two_minutes_ago and arbitrage['teamA']['isOpen'] and arbitrage['teamB']['isOpen'] and arbitrage['notification_id'] == None:
             print(f"Arbitrage opportunity for match '{arbitrage['match_name']}' has been there for more than 2 minutes.")
             print(arbitrage)
@@ -159,30 +136,30 @@ async def clean_arbitrages():
     matches_names = [item['match_name'].strip() for item in matches.data]
     print("Run arbitrages cleaners 🧹")
     for arb in arbitrages.data:
-        arb_match_name = arb['match_name'].split('vs')
-        #arb_match_name = ('-').join(arb_match_name)
+        arb_match_name = arb['match_name']
         if arb_match_name not in matches_names:
             await edit_message(arb, True)
-        
-    
 
 #======== DB Actions =======
-async def db_actions(arbitrages):
+async def db_actions(arbitrages, similarity_threshold=80):
     arbs_table = db.table("arbitrages").select("*").execute()
     arbs_data = arbs_table.data
-    arbs_names = [item['match_name'] for item in arbs_data]
-
+    
     for arbitrage in arbitrages:
-        if arbitrage['match_name'] in arbs_names:
-            # Find the corresponding record in arbs_data
-            matching_arbitrage = next(item for item in arbs_data if item['match_name'] == arbitrage['match_name'])
-            
+        # Find a matching arbitrage based on partial token sort ratio
+        matching_arbitrage = None
+        for item in arbs_data:
+            if fuzz.partial_token_sort_ratio(item['match_name'], arbitrage['match_name']) >= similarity_threshold:
+                matching_arbitrage = item
+                break
+        
+        if matching_arbitrage:
             # Update existing arbitrage record
             res = db.table("arbitrages").update({
                 'teamA': arbitrage['teamA'],
                 'teamB': arbitrage['teamB'],
                 'arbitrage_percentage': arbitrage['arbitrage_percentage']
-            }).eq('match_name', arbitrage['match_name']).execute()
+            }).eq('match_name', matching_arbitrage['match_name']).execute()
             
             print(f"Update record - ", res)
             

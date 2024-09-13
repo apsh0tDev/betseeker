@@ -31,3 +31,7 @@ fanduel_event_url = "https://sbapi.ny.sportsbook.fanduel.com/api/event-page?_ak=
 betmgm_url = "https://sports.ny.betmgm.com/en/sports/api/widget/widgetdata?layoutSize=Large&page=SportLobby&sportId={sportId}&widgetId=/mobilesports-v1.0/layout/layout_standards/modules/sportgrid&shouldIncludePayload=true"
 betmgm_events = "https://sports.ny.betmgm.com/cds-api/bettingoffer/fixture-view?x-bwin-accessid=ZjVlNTEzYzAtMGUwNC00YTk1LTg4OGYtZDQ4ZGNhOWY4Mjc1&lang=en-us&country=US&userCountry=US&subdivision=US-XY&offerMapping=All&fixtureIds={id}&state=Latest&includePrecreatedBetBuilder=true&supportVirtual=false&isBettingInsightsEnabled=true&useRegionalisedConfiguration=true&includeRelatedFixtures=false&statisticsModes=All"
 
+#Pointsbet
+pointsbet_competitions_url = "https://api.rw.pointsbet.com/api/v2/sports/{sport}/competitions"
+pointsbet_url = "https://api.rw.pointsbet.com/api/v2/competitions/{competitionId}/events/featured?includeLive=true&page=1"
+pointsbet_event_url = "https://api.rw.pointsbet.com/api/mes/v3/events/{eventId}"

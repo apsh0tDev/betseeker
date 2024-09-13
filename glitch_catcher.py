@@ -12,7 +12,7 @@ async def glitch_catcher_fanduel(markets, match, uuIDs):
     glitches_scores365 = []
     sofacore_uuID = uuIDs[0]['uuID']['SOFASCORE']
     scores365_uuID = uuIDs[0]['uuID']['SCORES365']
-
+    print(data)
     if sofacore_uuID != '':
         sofascore_table = db.table("live_matches").select("*").eq("uuID", sofacore_uuID).execute()
         current_sofascore_set = sofascore_table.data[0]['current_set']

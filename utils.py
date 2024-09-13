@@ -46,3 +46,14 @@ async def get_uuID(match):
                 scores365_uuID = item['uuID']
 
     return sofa_uuID, scores365_uuID
+
+def fix_match_name (match_name:str):
+    print(match_name)
+    until_vs = re.match(r"[a-zA-Z /\.]+ (v|-) ", match_name)
+    if (until_vs):
+        name1 = match_name[:(until_vs.span()[1] - 3)]
+        name2 = match_name[(until_vs.span()[1]):]
+        match_name = f"{name1} vs {name2}"
+        print(match_name)
+    return match_name
+

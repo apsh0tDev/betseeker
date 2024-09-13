@@ -5,8 +5,8 @@ from rich import print
 from loguru import logger
 from constants import Site
 from cleaners import clean
-from utils import remove_parentheses, get_uuID
 from db_actions import exists, update, upload, db_actions
+from utils import remove_parentheses, get_uuID, fix_match_name
 
 
 async def tidy_up_matches(load, sport):
@@ -18,7 +18,7 @@ async def tidy_up_matches(load, sport):
             for match in fixtures:
                 if match['stage'] == "Live":
                     info = {
-                        "match_name" : remove_parentheses(match['name']['value']),
+                        "match_name" : fix_match_name(remove_parentheses(match['name']['value'])),
                         "match_id" : match['id'],
                         "tournament" : match['tournament']['name']['value'],
                         "competition" : match['competition']['name']['value'],
@@ -106,7 +106,7 @@ async def regular_odds(game, table, match_name, match_id, match_players):
 async def set_default_info(match_name, match_id, game):
     info = {
         "match_id" : match_id,
-        "match_name" : match_name,
+        "match_name" : fix_match_name(match_name),
         "source" : Site.BETMGM.value,
         "isOpen" : True if game['visibility'] == "Visible" else False
     }

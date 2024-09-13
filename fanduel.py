@@ -3,7 +3,7 @@ from constants import Site
 from rich import print
 from thefuzz import fuzz
 from cleaners import clean
-from utils import get_uuID
+from utils import get_uuID, fix_match_name
 from glitch_catcher import glitch_catcher_fanduel
 from db_actions import exists, update, upload, db_actions
 
@@ -27,7 +27,7 @@ async def tidy_up_matches(load, sport):
                 event = markets[key]
                 info = {
                     "match_id": event['eventId'],
-                    "match_name" : find_value(event['eventId'], evs),
+                    "match_name" : fix_match_name(find_value(event['eventId'], evs)),
                     "competition" : find_value(event['competitionId'], competitions),
                     "source" : Site.FANDUEL.value
                 }
@@ -119,7 +119,7 @@ def extract_players(matchup):
 async def set_default_info(event, match_name):
     info = {
         "match_id" : event['eventId'],
-        "match_name" : match_name,
+        "match_name" : fix_match_name(match_name),
         "source" : Site.FANDUEL.value
     }
     return info
