@@ -5,6 +5,7 @@ import requests
 from rich import print
 from loguru import logger
 from dotenv import load_dotenv
+from dev_notifier import notification
 from scrapingant_client import ScrapingAntClient
 
 load_dotenv()
@@ -57,8 +58,10 @@ async def scrape_by_site(url, site, headless):
             return result.content
         else:
             print(result.content)
+            await notification(f"{site} // {result.content}")
             return None 
     except Exception as e:
         print(e)
+        await notification(f"{site} // {e}")
         return None  
         
