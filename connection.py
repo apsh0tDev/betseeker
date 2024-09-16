@@ -44,7 +44,7 @@ async def get_token(site):
         case "DRAFTKINGS":
             key = os.getenv("DRAFTKINGS_SAT")
         case "FANDUEL":
-            key = "2dc150524fe84cddb620b1195a5358d2" #TEMP - fix this
+            key = "b616ed151a744f9a9871a5c379fe4561"
             
     return key
 
