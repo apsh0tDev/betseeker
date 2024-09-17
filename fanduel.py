@@ -68,7 +68,7 @@ async def handle_markets(load, sport):
     
 async def market_sorter(event, market, players, match_name):
     market_name = market['marketName']
-    print(market_name)
+    #print(market_name)
     match market_name:
         case "Set 1 Winner":
             await regular_odds(
@@ -97,7 +97,7 @@ async def market_sorter(event, market, players, match_name):
 
 #----- Markets
 async def regular_odds(event, players, match_name, table, market):
-    print(table)
+    #print(table)
     info = await set_default_info(event=event, match_name=match_name)
     info['isOpen'] = True if market['marketStatus'] == "OPEN" else False
     info['teamA'] = { "name" : players[0], "odds" : await set_default_odds(market['runners'], 0) }

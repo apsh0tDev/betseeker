@@ -1,5 +1,6 @@
 import re
 from db import db
+from rich import print
 from constants import Site
 from notifier import glitch_notifier
 from loguru import logger
@@ -16,24 +17,22 @@ async def glitch_catcher_fanduel(markets, match, uuIDs):
     if sofacore_uuID != '':
         sofascore_table = db.table("live_matches").select("*").eq("uuID", sofacore_uuID).execute()
         current_sofascore_set = sofascore_table.data[0]['current_set']
-        print("Sofascore current set: ", current_sofascore_set)
+        print("*------ Sofascore current set: ", current_sofascore_set)
         for item in data:
             data_set = re.search(r"Set \d|Final", item['name'])
-            print(item)
-            print(data_set)
             if data_set and sets.index(data_set.group()) < sets.index(current_sofascore_set):
-                glitches_sofascore.append(item)
+                glitches_sofascore.append(item['name'])
     else:
         print("No match found for sofascore")
         
     if scores365_uuID != '':
         scores365_table = db.table("live_matches").select("*").eq("uuID", scores365_uuID).execute()
         current_scores365_set = scores365_table.data[0]['current_set']
-        print("365 scores current set: ", current_scores365_set)
+        print("*------ 365 scores current set: ", current_scores365_set)
         for item in data:
-            data_set = re.search(r"Set \d|Final", item)
+            data_set = re.search(r"Set \d|Final", item['name'])
             if data_set and sets.index(data_set.group()) < sets.index(current_scores365_set):
-                glitches_scores365.append(item)
+                glitches_scores365.append(item['name'])
     else:
         print("No match found for 365scores")
 

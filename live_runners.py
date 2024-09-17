@@ -48,3 +48,6 @@ try:
     asyncio.get_event_loop().run_forever()
 except (KeyboardInterrupt, SystemExit):
     pass
+
+"""if __name__ == "__main__":
+    asyncio.run(data_scrapers())"""
