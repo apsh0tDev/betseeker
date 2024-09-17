@@ -18,7 +18,9 @@ async def glitch_catcher_fanduel(markets, match, uuIDs):
         current_sofascore_set = sofascore_table.data[0]['current_set']
         print("Sofascore current set: ", current_sofascore_set)
         for item in data:
-            data_set = re.search(r"Set \d|Final", item)
+            data_set = re.search(r"Set \d|Final", item['name'])
+            print(item)
+            print(data_set)
             if data_set and sets.index(data_set.group()) < sets.index(current_sofascore_set):
                 glitches_sofascore.append(item)
     else:

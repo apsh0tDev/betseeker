@@ -60,7 +60,7 @@ async def handle_markets(load, sport):
             markets_keys = [key for key in markets]
             for key in markets_keys:
                 market = markets[key]
-                market_names.append(market['marketName'])
+                market_names.append({"name": market['marketName'], "status" : market['marketStatus']})
                 await market_sorter(event, market, players, match_name)
 
         uuIDs = db.table("matches_list").select("*").eq("match_id", eventId).execute()

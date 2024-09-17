@@ -27,6 +27,7 @@ async def line_scrapers():
     await asyncio.gather(*tasks)
 
 async def data_scrapers():
+    print("--------- RUNNING GENERAL DATA SCRAPERS ---------")
     tasks = [
         scrapers.scrape_data(Site.FANDUEL.value, True, "tennis"),
         scrapers.scrape_data(Site.BETMGM.value, False, "tennis")

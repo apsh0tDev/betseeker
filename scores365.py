@@ -59,7 +59,7 @@ async def tidy_up_365scores(data):
             print(res_score)
 
     #--- Scheduled matches
-    await handle_schedule(matches_to_schedule)
+    #await handle_schedule(matches_to_schedule)
     await clean(data=matches_ids, table="live_matches", source=Site.SCORES365.value)
 
 #--- Handle schedule 📆

@@ -58,7 +58,6 @@ async def scrape_events(site, useProxy, sport):
     if len(matches_ids) > 0:
         for task in matches_ids:
             tasks.append(scrape_event(task, site, useProxy, sport))
-            await asyncio.sleep(1)
 
     results = await asyncio.gather(*tasks, return_exceptions=True)
     for result in results:
@@ -144,7 +143,10 @@ async def get_url(site, sport, isEvent=False, isCompetition=False, task_id=''):
     match site:
         case "FANDUEL":
             if sport == "tennis":
-                url = constants.fanduel_live_url.format(eventTypeID=2)
+                if isEvent:
+                    url = constants.fanduel_event_url.format(id=task_id, tab="all")
+                else:
+                    url = constants.fanduel_live_url.format(eventTypeID=2)
         case "BETMGM":
             if sport == "tennis":
                 url = constants.betmgm_url.format(sportId=5)
