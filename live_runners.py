@@ -8,7 +8,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 scheduler = AsyncIOScheduler()
 logger.add("arbitrages.log", filter=lambda record: "arbitrage" in record["extra"], rotation="2 weeks")
-logger.add("glitches.log", filter=lambda record: "arbitrage" in record["extra"], rotation="2 weeks")
+logger.add("glitches.log", filter=lambda record: "glitch" in record["extra"], rotation="2 weeks")
 logger.add("info.log", level="INFO", rotation="2 weeks")
 logger.add("errors.log", level="WARNING", rotation="2 weeks")
 
@@ -22,7 +22,7 @@ async def running():
 async def line_scrapers():
     tasks = [
         scrapers.scrape_events(Site.FANDUEL.value, True, "tennis"),
-        scrapers.scrape_events(Site.BETMGM.value, False, "tennis")
+        #scrapers.scrape_events(Site.BETMGM.value, False, "tennis")
     ]
     await asyncio.gather(*tasks)
 
