@@ -22,16 +22,29 @@ def get_token():
 
 WEBHOOK_URL = get_token()
 
-async def glitch_notifier(glitches, match_name, current_set, site, score_site):
+async def glitch_notifier(glitches, match_name, site, uuID):
     output = "\n".join(glitches)
     text = (
         f"👾 **Glitch found in {site}!**\n\n"
         f"**Match:** {match_name}\n"
-        f"**Current Set on {score_site}:** {current_set}\n"
         f"**Line(s):** \n"
         f"{output}\n\n"
         f"**Time:** {get_current_ny_time()}"
     )
+    async with aiohttp.ClientSession() as session:
+        webhook = discord.Webhook.from_url(WEBHOOK_URL, session=session)
+        message = await webhook.send(text, username='Odds Bot', wait=True)
+        search = db.table("glitches").select("*").match({"uuID" : uuID}).execute()
+        if len(search.data) > 0:
+            db.table("glitches").update({"notification_id" : message.id}).match({"uuID" : uuID}).execute()
+
+async def delay_notifier(match_name, site):
+    text = (
+        f"⚠️ **There's a slight delay in {site} scores!**\n\n"
+        f"**Match:** {match_name}\n\n"
+        f"_Glitches may appear during this match._"
+    )
+
     async with aiohttp.ClientSession() as session:
         webhook = discord.Webhook.from_url(WEBHOOK_URL, session=session)
         message = await webhook.send(text, username='Odds Bot', wait=True)
@@ -111,3 +124,6 @@ async def get_source(source_name):
         return "Resorts World Bet (Fanatics)"
     else:
         return source_name
+    
+if __name__ == "__main__":
+    asyncio.run(delay_notifier("Lorenzo Musetti vs Juncheng Shang", "FanDuel"))
