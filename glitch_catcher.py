@@ -7,7 +7,7 @@ from notifier import glitch_notifier
 from loguru import logger
 from typing import List
 from thefuzz import fuzz
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
 import shortuuid
 
 ny_tz = pytz.timezone('America/New_York')
@@ -38,7 +38,7 @@ async def glitch_catcher_fanduel(data, match, uuIDs):
     else:
         print("No match found for 365scores")
 
-    await handle_glitches(glitches_sofascore=sofascore_glitches, glitches_scores365=scores365_glitches, match=match)
+    #await handle_glitches(glitches_sofascore=sofascore_glitches, glitches_scores365=scores365_glitches, match=match)
 
 async def get_glitches (data: List[str], sport:str, current:str):
     sports_regex = {
@@ -68,13 +68,15 @@ async def get_glitches (data: List[str], sport:str, current:str):
 async def handle_glitches(glitches_sofascore, glitches_scores365, match):
     if not glitches_sofascore and not glitches_scores365:
         logger.bind(glitch=True).info(f'No glitches found for match: {match}')
-        return
+        
 
     if glitches_sofascore:
         logger.bind(glitch=True).info(f'Glitches found! for match: {match} {glitches_sofascore} reference: {Site.SOFASCORE.value}')
+        await db_actions(match, glitches_sofascore, "SOFASCORE")
         
     if glitches_scores365:
         logger.bind(glitch=True).info(f'Glitches found! for match: {match} {glitches_scores365} reference: {Site.SCORES365.value}')
+        await db_actions(match, glitches_scores365, "365SCORES")
 
 
 async def db_actions(match_name, glitches, reference, similarity_threshold=80):
@@ -112,9 +114,8 @@ async def check_db_glitches():
     for glitch in glitches_table:
         created_at = datetime.fromisoformat(glitch['created_at'].replace('Z', '+00:00')).astimezone(ny_tz)
         if created_at > (datetime.now(ny_tz) - timedelta(minutes=2)):
-            duration = datetime.now(ny_tz) - created_at  # Calculate duration
-            # Format duration as hours, minutes, and seconds
-            duration_str = str(duration).split(".")[0]  # Get string representation without microseconds
+            duration = datetime.now(ny_tz) - created_at  
+            duration_str = str(duration).split(".")[0]
             logger.bind(glitch=True).info(f'Glitch for match: {glitch["match_name"]} {glitch["markets"]} reference: {glitch["reference"]} - has lasted: {duration_str}')
             if glitch['notification_id']:
                 return

@@ -82,6 +82,7 @@ async def scrape_events(site, useProxy, sport):
 
 async def scrape_event(id, site, useProxy, sport):
     url = await get_url(site=site, sport=sport, isEvent=True, task_id=id)
+    print(url)
     response = ''
     if useProxy:
         response = await scrape_by_site(url, constants.Site.FANDUEL.value, True)
@@ -118,7 +119,6 @@ async def scrape_event(id, site, useProxy, sport):
         print("None response, try again")
         return "ERROR"
 
-
 #--- Sportbooks handler
 async def handle_load(load, site, sport):
     match site:
@@ -138,13 +138,15 @@ async def handle_markets_load(load, site, sport):
 
 
 #--- Utils
-async def get_url(site, sport, isEvent=False, isCompetition=False, task_id=''):
+async def get_url(site, sport, isEvent=False, isCompetition=False, task_id='', isScores=False):
     url = ''
     match site:
         case "FANDUEL":
             if sport == "tennis":
                 if isEvent:
                     url = constants.fanduel_event_url.format(id=task_id, tab="all")
+                elif isScores:
+                    url = ''
                 else:
                     url = constants.fanduel_live_url.format(eventTypeID=2)
         case "BETMGM":

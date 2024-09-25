@@ -6,6 +6,7 @@ from cleaners import clean
 from utils import get_uuID, fix_match_name
 from glitch_catcher import glitch_catcher_fanduel
 from db_actions import exists, update, upload, db_actions
+from compare_sites import is_match_behind
 
 async def tidy_up_matches(load, sport):
     print("FANDUEL", sport)
@@ -42,8 +43,7 @@ async def tidy_up_matches(load, sport):
                 if value_exists:
                     print("Already exists, skip")
                 else:
-                    response = await upload(table="matches_list", info=info)
-                    print(response)
+                    await upload(table="matches_list", info=info)
 
     await clean(matches_ids, "matches_list", Site.FANDUEL.value)
 

@@ -22,7 +22,7 @@ async def running():
 async def line_scrapers():
     tasks = [
         scrapers.scrape_events(Site.FANDUEL.value, True, "tennis"),
-        #scrapers.scrape_events(Site.BETMGM.value, False, "tennis")
+        scrapers.scrape_events(Site.BETMGM.value, False, "tennis")
     ]
     await asyncio.gather(*tasks)
 

@@ -38,7 +38,7 @@ async def tidy_up_matches(load, sport):
                         print("Already exists, skip")
                     else:
                         response = await upload(table="matches_list", info=info)
-                        print(response)
+                        #print(response)
 
     await clean(matches_ids, "matches_list", Site.BETMGM.value)
 
@@ -94,7 +94,6 @@ async def market_sorter(game, match_name, match_id, match_players):
             )
 
 async def regular_odds(game, table, match_name, match_id, match_players):
-    print("Regular odds: ", table)
     info = await set_default_info(match_name=match_name, match_id=match_id, game=game)
     info['teamA'] = await set_default_odds(match_players=match_players, game=game, team=0)
     info['teamB'] = await set_default_odds(match_players=match_players, game=game, team=1)

@@ -38,7 +38,7 @@ async def get_uuID(match):
 
     matches = db.table("live_matches").select("*").execute()
     for item in matches.data:
-        fuzz_ratio = fuzz.token_sort_ratio(item['match_name'], match)
+        fuzz_ratio = fuzz.partial_token_sort_ratio(item['match_name'], match)
         if fuzz_ratio >= 70:
             if item['source'] == Site.SOFASCORE.value:
                 sofa_uuID = item['uuID']
@@ -48,12 +48,10 @@ async def get_uuID(match):
     return sofa_uuID, scores365_uuID
 
 def fix_match_name (match_name:str):
-    print(match_name)
     until_vs = re.match(r"[a-zA-Z /\.]+ (v|-) ", match_name)
     if (until_vs):
         name1 = match_name[:(until_vs.span()[1] - 3)]
         name2 = match_name[(until_vs.span()[1]):]
         match_name = f"{name1} vs {name2}"
-        print(match_name)
     return match_name
 

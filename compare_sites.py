@@ -16,8 +16,8 @@ def get_matches_by_name (match_name:str, sources:List[str]=[]) -> dict:
     all_matches = all_matches.execute()
 
     for match in all_matches.data:
-        match_percent = fuzz.token_sort_ratio(match_name, match["match_name"])
-        if match_percent >= 80:
+        match_percent = fuzz.partial_token_sort_ratio(match_name, match["match_name"])
+        if match_percent >= 70:
             res_scoreboard = (
                 db.table("scoreboard")
                 .select("*")
@@ -33,17 +33,17 @@ def get_matches_by_name (match_name:str, sources:List[str]=[]) -> dict:
 
     return scores
 
-def is_match_behind(this_match:dict): # required keys: 'teamA', 'teamB', 'match_name'
+async def is_match_behind(this_match:dict): # required keys: 'teamA', 'teamB', 'match_name'
 
-    other_matches = get_matches_by_name(this_match["match_name"], [Site.SOFASCORE.value(), Site.SCORES365.value()])
+    other_matches = get_matches_by_name(this_match["match_name"], [Site.SOFASCORE.value, Site.SCORES365.value])
     this_score = [this_match["teamA"], this_match["teamB"]]
 
     updated_matches = []
 
-    if Site.SOFASCORE.value() in other_matches:
-        updated_matches.append(other_matches[Site.SOFASCORE.value()])
-    if Site.SCORES365.value() in other_matches:
-        updated_matches.append(other_matches[Site.SCORES365.value()])
+    if Site.SOFASCORE.value in other_matches:
+        updated_matches.append(other_matches[Site.SOFASCORE.value])
+    if Site.SCORES365.value in other_matches:
+        updated_matches.append(other_matches[Site.SCORES365.value])
 
     is_behind = False
 
@@ -54,12 +54,3 @@ def is_match_behind(this_match:dict): # required keys: 'teamA', 'teamB', 'match_
             is_behind = True
 
     return is_behind
-
-# TEST:
-#   is_match_behind(
-#       {
-#           'teamA': ['6', '1'],
-#           'teamB': ['3', '1'],
-#           'match_name': "Moeller E. vs Pellegrino A."
-#       }
-#   )
