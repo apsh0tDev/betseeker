@@ -22,6 +22,8 @@ def get_token():
 
 WEBHOOK_URL = get_token()
 
+# ------ Glitches
+
 async def glitch_notifier(glitches, match_name, site, uuID):
     output = "\n".join(glitches)
     text = (
@@ -38,6 +40,8 @@ async def glitch_notifier(glitches, match_name, site, uuID):
         if len(search.data) > 0:
             db.table("glitches").update({"notification_id" : message.id}).match({"uuID" : uuID}).execute()
 
+# ------ Delays
+
 async def delay_notifier(match_name, site):
     text = (
         f"⚠️ **There's a slight delay in {site} scores!**\n\n"
@@ -49,6 +53,8 @@ async def delay_notifier(match_name, site):
         webhook = discord.Webhook.from_url(WEBHOOK_URL, session=session)
         message = await webhook.send(text, username='Odds Bot', wait=True)
         print(message.id)
+
+# ------ Arbitrages
 
 async def arbitrage_notification(arbitrage_data):
     async with aiohttp.ClientSession() as session:

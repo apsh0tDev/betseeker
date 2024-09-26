@@ -119,7 +119,9 @@ async def check_glitches():
             duration_str = str(duration).split(".")[0]
             print(f'Glitch for match: {glitch["match_name"]} {glitch["markets"]} reference: {glitch["reference"]} - has lasted: {duration_str}')
             if glitch['notification_id']:
-                print("Notification already sent.")
+                print("Notification already sent. Update message")
+                
+
             else:
                 await glitch_notifier(glitches=glitch['markets'], match_name=glitch['match_name'], site="FanDuel", uuID=glitch['uuID'])
 
