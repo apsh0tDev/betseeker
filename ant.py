@@ -11,7 +11,7 @@ async def add_token (token:str, count:int=10_000):
 
     return res
 
-async def get_token ():
+async def get_token (update_count=True):
     table = db.table("tokens")
     tokens = table.select("*").execute().data
     if not tokens: return
@@ -22,20 +22,20 @@ async def get_token ():
         table.delete().eq("id", token["id"])
         token = tokens[1]
 
-    if token["count"] >= 1:
+    if token["count"] >= 1 and update_count:
         table.update({ "count": token["count"] - 1 }).eq("id", token["id"])
 
-        return token
+    return token
 
 class Ant:
     async def __init__(self):
-        t = await get_token()
+        t = await get_token(update_count=False)
         self.count = t["count"]
         self.token = t["token"]
         self.client = ScrapingAntClient(token=t["token"])
 
     async def reset_token(self):
-        t = await get_token()
+        t = await get_token(update_count=False)
         self.count = t["count"]
         self.token = t["token"]
         self.client = ScrapingAntClient(token=t["token"])
