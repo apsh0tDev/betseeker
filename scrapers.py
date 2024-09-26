@@ -18,7 +18,13 @@ async def scrape_data(site, useProxy, sport):
     print(url)
     response = ''
     if useProxy:
-        response = await scrape_by_site(url, constants.Site.FANDUEL.value, True)
+        #response = await scrape_by_site(url, constants.Site.FANDUEL.value, True)
+        data = {
+            'cmd' : 'request.get',
+            'url' : url,
+            'proxyCountry' : 'UnitedStates'
+        }
+        response = await scrape(data, site)
     else:
         data = {
             'cmd' : 'request.get',
@@ -85,14 +91,20 @@ async def scrape_event(id, site, useProxy, sport):
     print(url)
     response = ''
     if useProxy:
-        response = await scrape_by_site(url, constants.Site.FANDUEL.value, True)
+        #response = await scrape_by_site(url, constants.Site.FANDUEL.value, True)
+        data = {
+            'cmd' : 'request.get',
+            'url' : url,
+            'proxyCountry' : 'UnitedStates'
+        }
+        response = await scrape(data, site)
     else:
         data = {
             'cmd' : 'request.get',
             'url' : url,
             'requestType' : 'request'
         }
-        response = await scrape(data, constants.Site.BETMGM.value)
+        response = await scrape(data, site)
     
     if response != None and response != '':
         if useProxy:
