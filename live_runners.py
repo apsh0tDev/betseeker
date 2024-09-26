@@ -41,7 +41,7 @@ job_defaults = {
 scheduler.configure(job_defaults=job_defaults)
 scheduler.add_job(running, 'interval', seconds=40)
 scheduler.add_job(line_scrapers, 'interval', seconds=40)
-scheduler.add_job(data_scrapers, 'interval', minutes=5)
+scheduler.add_job(data_scrapers, 'interval', minutes=2)
 
 try:
     scheduler.start()
