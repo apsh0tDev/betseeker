@@ -5,7 +5,7 @@ import shortuuid
 from db import db
 from rich import print
 from constants import Site
-from notifier import glitch_notifier
+from notifier import glitch_notifier, edit_glitch_notification
 from loguru import logger
 from typing import List
 from thefuzz import fuzz
@@ -120,7 +120,12 @@ async def check_glitches():
             print(f'Glitch for match: {glitch["match_name"]} {glitch["markets"]} reference: {glitch["reference"]} - has lasted: {duration_str}')
             if glitch['notification_id']:
                 print("Notification already sent. Update message")
-                
+                data = {
+                    "match_name" : glitch['match_name'],
+                    "markets" : glitch['markets'],
+                    "notification_id" : glitch['notification_id']
+                }
+                await edit_glitch_notification(data, "FanDuel", False)
 
             else:
                 await glitch_notifier(glitches=glitch['markets'], match_name=glitch['match_name'], site="FanDuel", uuID=glitch['uuID'])

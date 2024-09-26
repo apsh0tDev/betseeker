@@ -40,6 +40,29 @@ async def glitch_notifier(glitches, match_name, site, uuID):
         if len(search.data) > 0:
             db.table("glitches").update({"notification_id" : message.id}).match({"uuID" : uuID}).execute()
 
+async def edit_glitch_notification(data, site, available=True):
+        output = "\n".join(data['markets'])
+        async with aiohttp.ClientSession() as session:
+            webhook = discord.Webhook.from_url(WEBHOOK_URL, session=session)
+            past_message = await webhook.fetch_message(data['notification_id'])
+            if available:
+                updated_message = (
+                    f"👾 **Glitch found in {site}!**\n\n"
+                    f"**Match:** {data['match_name']}\n"
+                    f"**Line(s):** \n"
+                    f"{output}\n\n"
+                    f"**Time:** {get_current_ny_time()}"
+                )
+                await past_message.edit(content=updated_message)
+            else:
+              lines = past_message.content.split('\n')
+              lines.remove("👾 **Glitch found in FanDuel!**")
+              lines.insert(0,"**⛔👾 Glitch opportunity ended. **")
+              output = "\n".join(lines)
+              await past_message.edit(content=output)
+              response = db.table("glitches").delete().eq("notification_id", data['notification_id']).execute()
+              print(response)
+
 # ------ Delays
 
 async def delay_notifier(match_name, site):
