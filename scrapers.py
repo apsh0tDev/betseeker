@@ -151,7 +151,10 @@ async def get_url(site, sport, isEvent=False, isCompetition=False, task_id='', i
                     url = constants.fanduel_live_url.format(eventTypeID=2)
         case "BETMGM":
             if sport == "tennis":
-                url = constants.betmgm_url.format(sportId=5)
+                if isEvent:
+                    url = constants.betmgm_events.format(id=task_id)
+                else:
+                    url = constants.betmgm_url.format(sportId=5)
     return url
 
 if __name__ == "__main__":
