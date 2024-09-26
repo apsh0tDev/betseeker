@@ -16,7 +16,7 @@ async def call_all_markets():
     asyncio.gather(*tasks)
 
 async def get_market(market_name):
-    regular_types = ["SET_ONE_WINNER", "SET_TWO_WINNER", "SET_THREE_WINNER", "MATCH_WINNER"]
+    regular_types = ["SET_ONE_WINNER", "SET_TWO_WINNER", "SET_THREE_WINNER"]
 
     if market_name in regular_types:
         await regular_odds(market_name)
@@ -25,7 +25,7 @@ async def regular_odds(market_name):
     table = market_name.lower()
     response = db.table(table).select("*").execute()
     groups = await group_matches(response.data)
-    arbitrages = await calculate_arbitrage(odds=groups, market="Match Winner")
+    arbitrages = await calculate_arbitrage(odds=groups, market=market_name)
     if len(arbitrages) > 0:
         print("ARBITRAGES: ")
         print(arbitrages)
