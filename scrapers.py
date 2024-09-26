@@ -155,4 +155,4 @@ async def get_url(site, sport, isEvent=False, isCompetition=False, task_id='', i
     return url
 
 if __name__ == "__main__":
-    asyncio.run(scrape_data(constants.Site.DRAFTKINGS.value, False, "tennis"))
+    asyncio.run(scrape_events(constants.Site.FANDUEL.value, True, "tennis"))

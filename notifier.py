@@ -83,7 +83,7 @@ async def format_message(arbitrage_data):
     teamB_source = await get_source(arbitrage_data['teamB']['source']) 
     teamA_status = arbitrage_data['teamA']['isOpen']
     teamB_status = arbitrage_data['teamB']['isOpen']
-    market = arbitrage_data['market']
+    market = await get_market(arbitrage_data['market'])
     utc_time = datetime.strptime(arbitrage_data['created_at'], '%Y-%m-%dT%H:%M:%S.%f%z')
     arbitrage_percentage = float(arbitrage_data['arbitrage_percentage'])
     ny_tz = pytz.timezone('America/New_York')
@@ -124,6 +124,15 @@ async def get_source(source_name):
         return "Resorts World Bet (Fanatics)"
     else:
         return source_name
+    
+async def get_market(market_name):
+    match market_name:
+        case "SET_ONE_WINNER":
+            return "Set 1 Winner"
+        case "SET_TWO_WINNER":
+            return "Set 2 Winner"
+        case "SET_THREE_WINNER":
+            return "Set 3 Winner"
     
 if __name__ == "__main__":
     asyncio.run(delay_notifier("Lorenzo Musetti vs Juncheng Shang", "FanDuel"))
