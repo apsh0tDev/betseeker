@@ -22,7 +22,8 @@ async def scrape_data(site, useProxy, sport):
         data = {
             'cmd' : 'request.get',
             'url' : url,
-            'proxyCountry' : 'UnitedStates'
+            'proxyCountry' : 'UnitedStates',
+            'requestType' : 'request'
         }
         response = await scrape(data, site)
     else:
@@ -33,7 +34,7 @@ async def scrape_data(site, useProxy, sport):
         }
         response = await scrape(data, site)
     if response != None and response != '':
-        if useProxy:
+        """if useProxy:
             is_valid = await verifier_alt(response)
             if is_valid:
                 soup = bs4.BeautifulSoup(response, 'html.parser')
@@ -42,13 +43,13 @@ async def scrape_data(site, useProxy, sport):
                 await handle_load(load, site, sport)
             else:
                 print("Invalid response, try again")  
+        else:"""
+        is_valid = await verifier(response)
+        if is_valid:
+            load = json.loads(response['solution']['response'])
+            await handle_load(load, site, sport)
         else:
-            is_valid = await verifier(response)
-            if is_valid:
-                load = json.loads(response['solution']['response'])
-                await handle_load(load, site, sport)
-            else:
-               print("Invalid response, try again") 
+            print("Invalid response, try again") 
     else:
         print("None response, try again")
 
@@ -95,7 +96,8 @@ async def scrape_event(id, site, useProxy, sport):
         data = {
             'cmd' : 'request.get',
             'url' : url,
-            'proxyCountry' : 'UnitedStates'
+            'proxyCountry' : 'UnitedStates',
+            'requestType' : 'request'
         }
         response = await scrape(data, site)
     else:
@@ -107,7 +109,7 @@ async def scrape_event(id, site, useProxy, sport):
         response = await scrape(data, site)
     
     if response != None and response != '':
-        if useProxy:
+        """if useProxy:
             is_valid = await verifier_alt(response)
             if is_valid:
                 soup = bs4.BeautifulSoup(response, 'html.parser')
@@ -117,16 +119,16 @@ async def scrape_event(id, site, useProxy, sport):
                 return "DONE"
             else:
                 print("Invalid response, try again")
-                return "ERROR"
+                return "ERROR"""
+        #else:
+        is_valid = await verifier(response)
+        if is_valid:
+            load = json.loads(response['solution']['response'])
+            await handle_markets_load(load, site, sport)
+            return "DONE"
         else:
-            is_valid = await verifier(response)
-            if is_valid:
-                load = json.loads(response['solution']['response'])
-                await handle_markets_load(load, site, sport)
-                return "DONE"
-            else:
-                print("Invalid response, try again")
-                return "ERROR"                
+            print("Invalid response, try again")
+            return "ERROR"                
     else:
         print("None response, try again")
         return "ERROR"
@@ -170,4 +172,4 @@ async def get_url(site, sport, isEvent=False, isCompetition=False, task_id='', i
     return url
 
 if __name__ == "__main__":
-    asyncio.run(scrape_events(constants.Site.FANDUEL.value, True, "tennis"))
+    asyncio.run(scrape_data(constants.Site.FANDUEL.value, True, "tennis"))
