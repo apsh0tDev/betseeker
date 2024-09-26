@@ -63,7 +63,7 @@ async def handle_markets(load, sport):
                 market_names.append({"name": market['marketName'], "status" : market['marketStatus']})
                 await market_sorter(event, market, players, match_name)
         
-        #await glitch_catcher_fanduel(market_names, match_name)
+        await glitch_catcher_fanduel(market_names, match_name)
     
 async def market_sorter(event, market, players, match_name):
     market_name = market['marketName']

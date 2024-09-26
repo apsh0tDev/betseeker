@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 
 load_dotenv()
 
-current_branch = "PROD"
+current_branch = "DEV"
 
 def get_token():
     if current_branch == "DEV":

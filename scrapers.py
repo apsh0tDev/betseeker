@@ -144,7 +144,7 @@ async def get_url(site, sport, isEvent=False, isCompetition=False, task_id='', i
         case "FANDUEL":
             if sport == "tennis":
                 if isEvent:
-                    url = constants.fanduel_event_url.format(id=task_id, tab="all")
+                    url = constants.fanduel_event_url.format(id=task_id, tab="popular")
                 elif isScores:
                     url = ''
                 else:
