@@ -70,7 +70,6 @@ class Ant:
             "count": new_count
         }).eq("token", self.token).execute()
 
-        print(r)
         if self.count <= 0:
             await self.reset_token()
 
@@ -103,13 +102,13 @@ class Ant:
         if len(info_list) > self.count:
             info_list = info_list[:self.count]
 
-        for info in info_list:
+        for i in range(len(info_list)):
             if common:
-                info.update(common)
-            task = request(info["type"], info["url"], is_group=True, **info["params"])
-            tasks.append(task)
-        
-        res:List[Response] = await asyncio.gather(*tasks)
+                info_list[i].update(common)
+            
+        res:List[Response] = await asyncio.gather(*[
+            request(**info) for info in info_list
+        ])
 
         await self.update_count(self.count - len(tasks))
 
