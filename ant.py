@@ -1,7 +1,14 @@
+from enum import Enum
 import asyncio
 from typing import List
 from db import db
 from scrapingant_client import Response, ScrapingAntClient
+
+class Types(Enum):
+    GENERAL = "general_request"
+    ASYNC_GENERAL = "general_request_async"
+    MARKDOWN = "markdown_request"
+    ASYNC_MARKDOWN = "markdown_request_async"
 
 async def add_token (token:str, count:int=10_000):
     res = db.table("tokens").insert({
@@ -11,45 +18,59 @@ async def add_token (token:str, count:int=10_000):
 
     return res
 
-async def get_token (update_count=True):
+async def get_token (update_count=0):
     table = db.table("tokens")
     tokens = table.select("*").execute().data
     if not tokens: return
+
+    def key(x):
+        return x["id"]
+
+    tokens.sort(key=key)
         
     token = tokens[0]
 
     if token["count"] <= 0:
-        table.delete().eq("id", token["id"])
+        table.delete().eq("id", token["id"]).execute()
         token = tokens[1]
 
-    if token["count"] >= 1 and update_count:
-        table.update({ "count": token["count"] - 1 }).eq("id", token["id"])
+    if token["count"] >= 1:
+        table.update({ "count": token["count"] + update_count }).eq("id", token["id"]).execute()
 
     return token
 
 class Ant:
-    async def __init__(self):
-        t = await get_token(update_count=False)
+    def __init__(self):
+        self.count = None
+        self.token = None
+        self.client = None
+
+    @classmethod
+    async def create(cls):
+        self = cls()
+        t = await get_token()
         self.count = t["count"]
         self.token = t["token"]
         self.client = ScrapingAntClient(token=t["token"])
+        return self
 
     async def reset_token(self):
-        t = await get_token(update_count=False)
+        t = await get_token()
         self.count = t["count"]
         self.token = t["token"]
         self.client = ScrapingAntClient(token=t["token"])
 
     async def update_count(self, new_count=None):
-        if new_count is None:
+        if not new_count:
             new_count = self.count
-        else:
-            self.count = new_count
 
-        db.table("tokens").update({
+        self.count = new_count
+
+        r = db.table("tokens").update({
             "count": new_count
         }).eq("token", self.token).execute()
 
+        print(r)
         if self.count <= 0:
             await self.reset_token()
 
