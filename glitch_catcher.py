@@ -1,7 +1,7 @@
 import re
 import pytz
 import asyncio
-import shortuuid
+from shortuuid import uuid
 from db import db
 from rich import print
 from constants import Site
@@ -48,7 +48,7 @@ async def glitch_catcher_fanduel(data, match):
                 "match_name" : match,
                 "markets" : scores365_glitches,
                 "reference" : f"{Site.SOFASCORE.value}/{Site.SCORES365.value}",
-                "uuID" : shortuuid.uuid()
+                "uuID" : uuid()
             }
             logger.bind(glitch=True).info(f'Glitch found for match: {glitch['match_name']} - lines: {glitch['markets']}')
             await database_actions(glitch=glitch)
@@ -57,7 +57,7 @@ async def glitch_catcher_fanduel(data, match):
             "match_name" : match,
             "markets" : scores365_glitches,
             "reference" : Site.SCORES365.value,
-            "uuID" : shortuuid.uuid()
+            "uuID" : uuid()
         }
         logger.bind(glitch=True).info(f'Glitch found for match: {glitch['match_name']} - lines: {glitch['markets']}')
         await database_actions(glitch=glitch)
