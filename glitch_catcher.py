@@ -17,7 +17,7 @@ ny_tz = pytz.timezone('America/New_York')
 
 async def glitch_catcher_fanduel(data, match):
     print(f"RUNNING GLITCH CATCHER 👾 - {Site.FANDUEL.value} - for match {match}")
-    print(data)
+    #print(data)
     matches = db.table("live_matches").select("*").execute()
     matches_info = [ {"name" : item['match_name'], "current_set" : item['current_set'], "source" : item['source']} for item in matches.data ]
     match_to_handle_sofascore = {}
@@ -42,38 +42,38 @@ async def glitch_catcher_fanduel(data, match):
         scores365_glitches = await get_glitches(match_to_handle_365['data'], "tennis", match_to_handle_365['current'])
 
     
-    if len(scores365_glitches) > 0 and len(sofascore_glitches) > 0:
-        if sofascore_glitches == scores365_glitches:
+    try:
+        if len(scores365_glitches) == 0 and len(sofascore_glitches) == 0:
+            logger.bind(glitch=True).info(f'No glitches found for match: {match}')
+        elif len(scores365_glitches) > 0 and len(sofascore_glitches) > 0:
+                glitch = {
+                    "match_name" : match,
+                    "markets" : scores365_glitches,
+                    "reference" : f"{Site.SOFASCORE.value}/{Site.SCORES365.value}",
+                    "uuID" : uuid()
+                }
+                logger.bind(glitch=True).info(f'Glitch found for match: {glitch['match_name']} - lines: {glitch['markets']}')
+                await database_actions(glitch=glitch)
+        elif len(scores365_glitches) > 0 and len(sofascore_glitches) == 0:
             glitch = {
                 "match_name" : match,
                 "markets" : scores365_glitches,
-                "reference" : f"{Site.SOFASCORE.value}/{Site.SCORES365.value}",
+                "reference" : Site.SCORES365.value,
                 "uuID" : uuid()
             }
             logger.bind(glitch=True).info(f'Glitch found for match: {glitch['match_name']} - lines: {glitch['markets']}')
             await database_actions(glitch=glitch)
-    elif len(scores365_glitches) > 0 and len(sofascore_glitches) == 0:
-        glitch = {
-            "match_name" : match,
-            "markets" : scores365_glitches,
-            "reference" : Site.SCORES365.value,
-            "uuID" : uuid()
-        }
-        logger.bind(glitch=True).info(f'Glitch found for match: {glitch['match_name']} - lines: {glitch['markets']}')
-        await database_actions(glitch=glitch)
-    elif len(sofascore_glitches) > 0 and len(scores365_glitches) == 0:
-        glitch = {
-            "match_name" : match,
-            "markets" : sofascore_glitches,
-            "reference" : Site.SOFASCORE.value,
-            "uuID" : uuid()
-        }
-        logger.bind(glitch=True).info(f'Glitch found for match: {glitch['match_name']} - lines: {glitch['markets']}')
-        await database_actions(glitch=glitch)
-    else:
-        logger.bind(glitch=True).info(f'No glitches found for match: {glitch['match_name']}')
-        print("No glitches found!")
-
+        elif len(sofascore_glitches) > 0 and len(scores365_glitches) == 0:
+            glitch = {
+                "match_name" : match,
+                "markets" : sofascore_glitches,
+                "reference" : Site.SOFASCORE.value,
+                "uuID" : uuid()
+            }
+            logger.bind(glitch=True).info(f'Glitch found for match: {glitch['match_name']} - lines: {glitch['markets']}')
+            await database_actions(glitch=glitch)
+    except Exception as e:
+        print(e)
 
 
 # # # # # #
