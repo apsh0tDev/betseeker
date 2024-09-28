@@ -54,7 +54,7 @@ async def scrape_by_site(url, site, headless):
     token = await get_token(site)
     client = ScrapingAntClient(token=token)
     try:
-        result = client.general_request(url, proxy_country='US', browser=headless)
+        result = client.general_request(url, proxy_country='US')
         if result.status_code == 200:
             return result.content
         else:
