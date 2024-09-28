@@ -66,7 +66,7 @@ async def glitch_catcher_fanduel(data, match):
             "match_name" : match,
             "markets" : sofascore_glitches,
             "reference" : Site.SOFASCORE.value,
-            "uuID" : shortuuid.uuid()
+            "uuID" : uuid()
         }
         logger.bind(glitch=True).info(f'Glitch found for match: {glitch['match_name']} - lines: {glitch['markets']}')
         await database_actions(glitch=glitch)
@@ -80,29 +80,33 @@ async def glitch_catcher_fanduel(data, match):
 
 async def get_glitches(data: List[str], sport: str, current: str):
     print("Looking for glitches 🔍")
-    sports_regex = {
-        "baseball": [r"\d(st|nd|rd|th) inning", 0],
-        "tennis": [r"Set \d", -1]
-    }
+    try:
+        sports_regex = {
+            "baseball": [r"\d(st|nd|rd|th) inning", 0],
+            "tennis": [r"Set \d", -1]
+        }
 
-    glitches = []
-    regex, int_index = sports_regex[sport]
-    
-    if not sport in sports_regex: return None
+        glitches = []
+        regex, int_index = sports_regex[sport]
+        
+        if not sport in sports_regex: return None
 
-    current_match = re.search(regex, current, flags=re.IGNORECASE)
-    if not current_match: return None
+        current_match = re.search(regex, current, flags=re.IGNORECASE)
+        if not current_match: return None
 
-    current_int = int(current_match.group()[int_index])
-    
-    for match in data:
-        checked_match = re.search(regex, match, flags=re.IGNORECASE)
-        if checked_match:
-            checked_int = int(checked_match.group()[int_index])
-            if checked_int < current_int:
-                glitches.append(match)
+        current_int = int(current_match.group()[int_index])
+        
+        for match in data:
+            checked_match = re.search(regex, match, flags=re.IGNORECASE)
+            if checked_match:
+                checked_int = int(checked_match.group()[int_index])
+                if checked_int < current_int:
+                    glitches.append(match)
 
-    return glitches
+        return glitches
+    except Exception as e:
+        print(e)
+        return []
 
 async def database_actions(glitch):
     glitch_record_exists = await exists(table="glitches", to_match={"match_name": glitch['match_name'], "reference" : glitch['reference']})
