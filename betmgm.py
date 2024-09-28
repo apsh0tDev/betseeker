@@ -9,14 +9,17 @@ from db_actions import exists, update, upload, db_actions
 from utils import remove_parentheses, get_uuID, fix_match_name
 
 
-async def tidy_up_matches(load, sport):
+async def tidy_up_matches(load, sport, live):
+    print("Handling load")
     matches_ids = []
     if sport == "tennis":
         if 'widgets' in load and 'payload' in load['widgets'][0] and 'fixtures' in load['widgets'][0]['payload']:
             fixtures = load['widgets'][0]['payload']['fixtures']
-
-            for match in fixtures:
-                if match['stage'] == "Live":
+            live_matches = [match for match in fixtures if match['stage'] == "Live"]
+            prematches = [match for match in fixtures if match['stage'] == "PreMatch"]
+            matches_to_handle = live_matches if live else prematches
+            
+            for match in matches_to_handle:
                     info = {
                         "match_name" : fix_match_name(remove_parentheses(match['name']['value'])),
                         "match_id" : match['id'],
@@ -24,23 +27,27 @@ async def tidy_up_matches(load, sport):
                         "competition" : match['competition']['name']['value'],
                         "source" : Site.BETMGM.value,
                     }
-                    sofa_uuID, scores365_uuID = await get_uuID(info['match_name'])
-                    info['uuID'] = {
+                    if live:
+                        sofa_uuID, scores365_uuID = await get_uuID(info['match_name'])
+                        info['uuID'] = {
                         "SOFASCORE" : sofa_uuID,
                         "SCORES365" : scores365_uuID
+                        }
+                        info['status'] = "Live"
+                    elif live == False:
+                        info['status'] = "Prematch"
 
-                    }
-
-                    matches_ids.append(int(match['id']))
+            
+                    matches_ids.append(int(info['match_id']))
                     to_match = { "match_id" : info['match_id'], "match_name" : info['match_name'], "source" : Site.BETMGM.value}
                     value_exists = await exists("matches_list", to_match)
                     if value_exists:
                         print("Already exists, skip")
                     else:
-                        response = await upload(table="matches_list", info=info)
-                        #print(response)
+                        await upload(table="matches_list", info=info)
 
-    await clean(matches_ids, "matches_list", Site.BETMGM.value)
+        if live:
+            await clean(matches_ids, "matches_list", Site.BETMGM.value)
 
 #---- Markets
 async def handle_markets(load, sport):

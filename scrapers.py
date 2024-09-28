@@ -13,6 +13,22 @@ from verifier import verifier_alt, verifier
 from db_actions import exists, upload
 from connection import scrape_by_site, scrape
 
+async def scrape_main(site: str, useProxy: bool, sport:str, liveEvents: bool):
+    url = await get_url(site=site, sport=sport, isEvent=False, isCompetition=False, task_id='', isScores=False, liveEvents=False)
+    load = await get_data(url, False, site)
+    if load != None:
+        await handle_load(load=load, site=site, sport=sport, liveEvents=liveEvents)
+
+async def scrape_group(site: str, useProxy: bool, sport:str, liveEvents: bool):
+    source = site.capitalize()
+    featured_tournaments = db.table("featured_tournaments").select("*").eq("source", source).execute()
+    tournaments = [{"name" : item['name'], "key" : item['key']} for item in featured_tournaments.data]
+    if liveEvents:
+        live_tournaments = db.table("live_matches").select("*").execute()
+        live_names = [f"{item['tournament']} - {item['tournament_display_name']}" for item in live_tournaments.data]
+
+    
+
 async def scrape_data(site, useProxy, sport):
     url = await get_url(site, sport)
     print(url)
@@ -120,15 +136,16 @@ async def scrape_event(id, site, useProxy, sport):
         return "ERROR"
 
 #--- Sportbooks handler
-async def handle_load(load, site, sport):
-    match site:
-        case "FANDUEL":
-            await fanduel.tidy_up_matches(load, sport)
-        case "BETMGM":
-            await betmgm.tidy_up_matches(load, sport)
-        case "POINTSBET":
-            print(load)
-
+async def handle_load(load, site, sport, liveEvents):
+    site_modules = {
+        "FANDUEL" : fanduel,
+        "BETMGM" : betmgm,
+    }
+    if site in site_modules:
+        await getattr(site_modules[site], "tidy_up_matches")(load, sport, liveEvents)
+    else:
+        print("MODULE NOT FOUND.")
+        
 async def handle_markets_load(load, site, sport):
     match site:
         case "FANDUEL":
@@ -138,7 +155,7 @@ async def handle_markets_load(load, site, sport):
 
 
 #--- Utils
-async def get_url(site, sport, isEvent=False, isCompetition=False, task_id='', isScores=False):
+async def get_url(site='', sport="tennis", isEvent=False, isCompetition=False, task_id='', isScores=False, liveEvents=False):
     url = ''
     match site:
         case "FANDUEL":
@@ -157,5 +174,41 @@ async def get_url(site, sport, isEvent=False, isCompetition=False, task_id='', i
                     url = constants.betmgm_url.format(sportId=5)
     return url
 
+#-----
+async def get_data(url, useProxy, site):
+    load = ''
+    if useProxy:
+        response = await scrape_by_site(url, site, True)
+        is_valid = await verifier_alt(response)
+        if is_valid:
+            soup = bs4.BeautifulSoup(response, 'html.parser')
+            pre = soup.find("pre")
+            if pre:
+                try:
+                    load = json.loads(pre.text)
+                except json.JSONDecodeError:
+                    print(f"Invalid JSON response - {site}")
+                    load = None
+            else:
+                print(f"Pre not found - {site}")
+    else:
+        data = {
+            'cmd' : 'request.get',
+            'url' : url,
+            'requestType' : 'request'
+        }
+        if site != "BETMGM": data['proxyCountry'] = 'UnitedStates'
+        response = await scrape(data, site)
+        is_valid = await verifier(response)
+        if is_valid:
+            try:
+                load = json.loads(response['solution']['response'])
+            except json.JSONDecodeError:
+                print(f"Invalid JSON response - {site}")
+                load = None
+        else:
+            print(f"Invalid response {site}")
+    return load
+
 if __name__ == "__main__":
-    asyncio.run(scrape_data(constants.Site.FANDUEL.value, True, "tennis"))
+    asyncio.run(scrape_group(site=Site.POINTSBET.value, useProxy=False, sport="tennis", liveEvents=True))
