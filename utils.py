@@ -1,6 +1,5 @@
 import re
 import pytz
-import constants
 from db import db
 from thefuzz import fuzz
 from datetime import datetime
@@ -56,21 +55,3 @@ def fix_match_name (match_name:str):
         match_name = f"{name1} vs {name2}"
     return match_name
 
-def get_url(
-    site: str = '',
-    sport: str = 'tennis',
-    isEvent: bool = False,
-    isCompetition: bool = False,
-    task_id : str = '',
-    isScores : bool = False,
-    liveEvents : bool = False 
-):
-    url = ''
-    match site:
-        case "BETMGM":
-            if sport == "tennis":
-                if isEvent:
-                    url = ''
-                else:
-                    url = constants.betmgm_url.format(sportId=5)
-    return url

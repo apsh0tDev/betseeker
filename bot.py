@@ -1,5 +1,4 @@
 import os
-import asyncio
 import discord
 import textwrap
 from db import db
@@ -14,7 +13,7 @@ from schedule import get_schedule
 
 #---- Init
 load_dotenv()
-current_branch = "DEV"
+current_branch = "PROD"
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
@@ -129,18 +128,6 @@ async def logs(ctx, file = ''):
 
         if fuzz_ratio_glitch < 80 and fuzz_ratio_arb < 80:
             await ctx.send(f"❓ I'm not sure what `{file}` refers to. Try `arbitrages` or `glitches` for the correct logs.")
-
-@bot.command()
-async def arbitrages(ctx):
-    matches_list = db.table("matches_list").select("*").execute()
-    if len(matches_list.data) > 0:
-        await ctx.send("Getting arbitrages from live matches")
-        await asyncio.sleep(5)
-        await ctx.send("No arbitrages found.")
-    else:
-        await ctx.send("Getting arbitrages from prematches")
-        await asyncio.sleep(5)
-        await ctx.send("No arbitrages found.")
  
 
 #=== End of Bot Commands ====
