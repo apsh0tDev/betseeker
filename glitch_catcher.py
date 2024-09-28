@@ -50,6 +50,7 @@ async def glitch_catcher_fanduel(data, match):
                 "reference" : f"{Site.SOFASCORE.value}/{Site.SCORES365.value}",
                 "uuID" : shortuuid.uuid()
             }
+            logger.bind(glitch=True).info(f'Glitch found for match: {glitch['match_name']} - lines: {glitch['markets']}')
             await database_actions(glitch=glitch)
     elif len(scores365_glitches) > 0 and len(sofascore_glitches) == 0:
         glitch = {
@@ -58,6 +59,7 @@ async def glitch_catcher_fanduel(data, match):
             "reference" : Site.SCORES365.value,
             "uuID" : shortuuid.uuid()
         }
+        logger.bind(glitch=True).info(f'Glitch found for match: {glitch['match_name']} - lines: {glitch['markets']}')
         await database_actions(glitch=glitch)
     elif len(sofascore_glitches) > 0 and len(scores365_glitches) == 0:
         glitch = {
@@ -66,8 +68,10 @@ async def glitch_catcher_fanduel(data, match):
             "reference" : Site.SOFASCORE.value,
             "uuID" : shortuuid.uuid()
         }
+        logger.bind(glitch=True).info(f'Glitch found for match: {glitch['match_name']} - lines: {glitch['markets']}')
         await database_actions(glitch=glitch)
     else:
+        logger.bind(glitch=True).info(f'No glitches found for match: {glitch['match_name']}')
         print("No glitches found!")
 
 
@@ -110,6 +114,7 @@ async def database_actions(glitch):
 
 # # # # # 
 async def check_glitches():
+    print("Checking glitches...")
     glitches_table = db.table("glitches").select("*").execute()
     
     for glitch in glitches_table.data:
@@ -130,8 +135,12 @@ async def check_glitches():
             else:
                 await glitch_notifier(glitches=glitch['markets'], match_name=glitch['match_name'], site="FanDuel", uuID=glitch['uuID'])
 
+async def call_get_markets_every_20_seconds():
+    while True:
+        await check_glitches()
+        print("Running...")
+        await asyncio.sleep(20)
+
 
 if __name__ == "__main__":
-    asyncio.run(check_glitches())
-
-
+    asyncio.run(call_get_markets_every_20_seconds())
