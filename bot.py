@@ -10,10 +10,11 @@ from dotenv import load_dotenv
 from discord.ext import commands
 from live import get_live_matches
 from schedule import get_schedule
+from arbs import format_arbitrages
 
 #---- Init
 load_dotenv()
-current_branch = "PROD"
+current_branch = "DEV"
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
@@ -128,6 +129,20 @@ async def logs(ctx, file = ''):
 
         if fuzz_ratio_glitch < 80 and fuzz_ratio_arb < 80:
             await ctx.send(f"❓ I'm not sure what `{file}` refers to. Try `arbitrages` or `glitches` for the correct logs.")
+
+@bot.command()
+async def arbitrages(ctx):
+    live = db.table("matches_list").select("*").execute()
+    if len(live.data) > 0:
+        arbitrages = db.table("arbitrages").select("*").execute()
+        if len(arbitrages.data) > 0:
+            table = await format_arbitrages(arbitrages.data)
+            message = f"```ansi\n{table}\n```"
+            await ctx.send(message)
+        else:
+            await ctx.send("No arbitrages found.")
+    else:
+        await ctx.send("No arbitrages found.")
  
 
 #=== End of Bot Commands ====

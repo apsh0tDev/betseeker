@@ -55,3 +55,12 @@ def fix_match_name (match_name:str):
         match_name = f"{name1} vs {name2}"
     return match_name
 
+async def get_market_name(market_name):
+    match market_name:
+        case "SET_ONE_WINNER":
+            return "Set 1 Winner"
+        case "SET_TWO_WINNER":
+            return "Set 2 Winner"
+        case "SET_THREE_WINNER":
+            return "Set 3 Winner"
+

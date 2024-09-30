@@ -1,7 +1,9 @@
 import json
 import asyncio
 import shortuuid
+from tabulate import tabulate
 from db import db
+from utils import get_market_name
 from rich import print
 from thefuzz import fuzz
 from loguru import logger
@@ -186,6 +188,31 @@ async def db_actions(arbitrages, similarity_threshold=80):
                 'uuID': shortuuid.uuid()
             }).execute()
             print(f"New record - ", res)
+
+#======== Format arbitrages =======
+async def format_arbitrages(data):
+    header = [
+        "Match",
+        "Market",
+        "Bet A",
+        "Bet B",
+        "Percentage",
+    ]
+    body = []
+    for item in data:
+        market = await get_market_name(item['market'])
+        row = [
+            f"{item['match_name']}",
+            f"{market}",
+            f"{item['teamA']['source']} / {item['teamA']['decimalOdds']}",
+            f"{item['teamB']['source']} / {item['teamB']['decimalOdds']}",
+            f"{float(item['arbitrage_percentage']):.2f}%"
+        ]
+        body.append(row)
+
+    body.insert(0, header)
+    arbs_table = tabulate(body, tablefmt="simple", headers="firstrow")
+    return(arbs_table)
 
 
 async def call_get_markets_every_20_seconds():
