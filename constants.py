@@ -18,6 +18,7 @@ available_markets = [
 #===== Scores 
 #Sofascore
 sofascore_url = "https://www.sofascore.com/api/v1/sport/{sport_name}/events/live"
+sofascore_scores = "https://www.sofascore.com/api/v1/event/{id}/point-by-point"
 #365Scores
 scores365_url = "https://webws.365scores.com/web/games/allscores/?appTypeId=5&langId=9&timezoneName=America/NewYork&userCountryId=18&sports={sportId}&startDate={startDate}&endDate={endDate}&showOdds=true&onlyLiveGames=false&withTop=true"
 

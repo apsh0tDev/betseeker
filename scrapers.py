@@ -13,7 +13,75 @@ from verifier import verifier_alt, verifier
 from db_actions import exists, upload
 from connection import scrape_by_site, scrape
 
-async def scrape_data(site, useProxy, sport):
+
+#---------------
+async def scrape_data(url, useAlt, site):
+    response = ''
+    load = None
+    #--- Scraping Ant - backup
+    if useAlt:
+        response = await scrape_by_site(url, site, False)
+        is_valid = await verifier_alt(response)
+        if is_valid:
+            soup = bs4.BeautifulSoup(response, 'html.parser')
+            pre = soup.find("pre")
+            if pre:
+                try:
+                    load = json.loads(pre.text)
+                except json.JSONDecodeError:
+                    logger.error("Invalid JSON response")
+                    load = None
+            else:
+                logger.error("No pre found.")
+        else:
+            logger.error("Invalid response.")
+
+    #---- Scrappey - regular 
+    else:
+        data = {
+            'cmd' : 'request.get',
+            'url' : url,
+            'requestType' : 'request'
+        }
+        if site != 'BETMGM':
+            data['proxyCountry'] = 'UnitedStates'
+            response = await scrape(data, site)
+            is_valid = verifier(response)
+            if is_valid:
+                try:
+                    load = json.loads(response['solution']['response'])
+                except json.JSONDecodeError:
+                    logger.error("Invalid JSON response")
+                    load = None
+
+            else:
+                logger.error("Invalid response.")
+
+    return load
+#---------------
+
+async def scrape_by_tournament(site):
+    source = site.capitalize()
+    featured_tournaments = db.table("featured_tournaments").select("*").eq("source", source).execute()
+    live_table = db.table("live_matches").select("*").execute()
+    tournaments = [{"name" : item['name'] , "key" : item['key']} for item in featured_tournaments.data]
+    live_tournaments = [f"{item['tournament']} {item['tournament_display_name']}" for item in live_table.data] 
+    
+    keys = []
+    for tournament in tournaments:
+        for item in live_tournaments:
+            fuzz_ratio = fuzz.partial_token_sort_ratio(item, tournament['name'])
+            if fuzz_ratio >= 70:
+                keys.append(tournament['key'])
+
+    keys = list(set(keys))
+    #----- Task manager
+    for key in keys:
+        url = await get_url(site=site, sport="tennis", isEvent=False, isCompetition=True, task_id=key, isScores=False)
+        print(url)
+
+
+async def scrape_data_(site, useProxy, sport):
     url = await get_url(site, sport)
     print(url)
     response = ''
@@ -155,7 +223,11 @@ async def get_url(site, sport, isEvent=False, isCompetition=False, task_id='', i
                     url = constants.betmgm_events.format(id=task_id)
                 else:
                     url = constants.betmgm_url.format(sportId=5)
+        case "POINTSBET":
+            if sport == "tennis":
+                if isCompetition:
+                    url = constants.pointsbet_url.format(competitionId=task_id)
     return url
 
 if __name__ == "__main__":
-    asyncio.run(scrape_data(constants.Site.FANDUEL.value, True, "tennis"))
+    asyncio.run(scrape_by_tournament(constants.Site.POINTSBET.value))
