@@ -18,7 +18,7 @@ async def call_all_markets():
     asyncio.gather(*tasks)
 
 async def get_market(market_name):
-    regular_types = ["SET_ONE_WINNER", "SET_TWO_WINNER", "SET_THREE_WINNER"]
+    regular_types = ["SET_TWO_WINNER", "SET_THREE_WINNER"]
 
     if market_name in regular_types:
         await regular_odds(market_name)
