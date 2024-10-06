@@ -3,6 +3,7 @@ import json
 import asyncio
 import betmgm
 import fanduel
+import pointsbet
 import constants
 from db import db
 from rich import print
@@ -14,72 +15,55 @@ from db_actions import exists, upload
 from connection import scrape_by_site, scrape
 
 
-#---------------
-async def scrape_data(url, useAlt, site):
-    response = ''
+#------ Main scraper
+async def scrape_data(site, url):
+    print(url)
+    extraValidation = ["FANDUEL", "DRAFTKINGS", "POINTSBET"]
+    data = {
+        'cmd' : 'request.get',
+        'url' : url,
+    }
+    if site != "BETMGM":
+        data['proxyCountry'] = 'UnitedStates'
+    
+    if site not in extraValidation:
+        data['requestType'] = 'request'
+
     load = None
-    #--- Scraping Ant - backup
-    if useAlt:
-        response = await scrape_by_site(url, site, False)
-        is_valid = await verifier_alt(response)
+    print(data)
+    response = await scrape(data, site)
+    if response != None or response != '':
+        is_valid = await verifier(response)
         if is_valid:
-            soup = bs4.BeautifulSoup(response, 'html.parser')
-            pre = soup.find("pre")
-            if pre:
-                try:
-                    load = json.loads(pre.text)
-                except json.JSONDecodeError:
-                    logger.error("Invalid JSON response")
-                    load = None
-            else:
-                logger.error("No pre found.")
+            try:
+                print(load)
+            except json.JSONDecodeError as e:
+                logger.error(f"Invalid JSON response - {site}")
+                load = e
         else:
-            logger.error("Invalid response.")
-
-    #---- Scrappey - regular 
-    else:
-        data = {
-            'cmd' : 'request.get',
-            'url' : url,
-            'requestType' : 'request'
-        }
-        if site != 'BETMGM':
-            data['proxyCountry'] = 'UnitedStates'
-            response = await scrape(data, site)
-            is_valid = verifier(response)
-            if is_valid:
-                try:
-                    load = json.loads(response['solution']['response'])
-                except json.JSONDecodeError:
-                    logger.error("Invalid JSON response")
-                    load = None
-
-            else:
-                logger.error("Invalid response.")
+            logger.error(f"Invalid response - {site}")
 
     return load
-#---------------
 
-async def scrape_by_tournament(site):
-    source = site.capitalize()
-    featured_tournaments = db.table("featured_tournaments").select("*").eq("source", source).execute()
-    live_table = db.table("live_matches").select("*").execute()
-    tournaments = [{"name" : item['name'] , "key" : item['key']} for item in featured_tournaments.data]
-    live_tournaments = [f"{item['tournament']} {item['tournament_display_name']}" for item in live_table.data] 
+#------
+
+async def scrape_by_group(site, sport):
+    featured_tournaments_table = db.table("featured_tournaments").select("*").execute()
+    featured_tournaments = [{"name" : item['name'], "key" : item['key']} for item in featured_tournaments_table.data]
+
+    tournaments = ['WTA', 'ATP', 'ITF']
+    live_tournaments_table = db.table("live_matches").select("*").execute()
+    live_tournaments = [f"{item['tournament'] if item['tournament'] in tournaments else ''} {item['tournament_display_name']}" for item in live_tournaments_table.data]
     
     keys = []
-    for tournament in tournaments:
-        for item in live_tournaments:
-            fuzz_ratio = fuzz.partial_token_sort_ratio(item, tournament['name'])
-            if fuzz_ratio >= 70:
-                keys.append(tournament['key'])
 
-    keys = list(set(keys))
-    #----- Task manager
-    for key in keys:
-        url = await get_url(site=site, sport="tennis", isEvent=False, isCompetition=True, task_id=key, isScores=False)
-        print(url)
+    for tournament in featured_tournaments:
+        for live in live_tournaments:
+            fuzz_ratio = fuzz.token_sort_ratio(live, tournament['name'])
+            print(live, tournament['name'])
 
+    
+        
 
 async def scrape_data_(site, useProxy, sport):
     url = await get_url(site, sport)
@@ -195,7 +179,7 @@ async def handle_load(load, site, sport):
         case "BETMGM":
             await betmgm.tidy_up_matches(load, sport)
         case "POINTSBET":
-            print(load)
+            await pointsbet.tidy_up_matches(load)
 
 async def handle_markets_load(load, site, sport):
     match site:
@@ -230,4 +214,4 @@ async def get_url(site, sport, isEvent=False, isCompetition=False, task_id='', i
     return url
 
 if __name__ == "__main__":
-    asyncio.run(scrape_by_tournament(constants.Site.POINTSBET.value))
+    asyncio.run(scrape_by_group(Site.POINTSBET.value, "tennis"))
