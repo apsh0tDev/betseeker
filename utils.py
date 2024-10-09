@@ -3,7 +3,7 @@ import pytz
 from db import db
 from thefuzz import fuzz
 from datetime import datetime
-from constants import Site
+from constants import Site, POINTSBET_DATA, BETMGM_DATA, FANDUEL_DATA, DRAFTKINGS_DATA
 
 def get_current_ny_time():
     # Define New York timezone
@@ -63,4 +63,26 @@ async def get_market_name(market_name):
             return "Set 2 Winner"
         case "SET_THREE_WINNER":
             return "Set 3 Winner"
+        
+async def get_data(site):
+    data = {}
+    match site:
+        case "POINTSBET":
+            data = POINTSBET_DATA
+        case "BETMGM":
+            data = BETMGM_DATA
+        case "FANDUEL" :
+            data = FANDUEL_DATA
+        case "DRAFTKINGS":
+            data = DRAFTKINGS_DATA
+
+    return data
+
+def decimal_to_american(decimal_odds):
+    if decimal_odds >= 2.0:
+        return (decimal_odds - 1) * 100
+    else:
+        return -100 / (decimal_odds - 1)
+
+
 

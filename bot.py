@@ -8,13 +8,14 @@ from constants import Site
 from tabulate import tabulate
 from dotenv import load_dotenv
 from discord.ext import commands
+from glitch_catcher import format_glitches
 from live import get_live_matches
 from schedule import get_schedule
 from arbs import format_arbitrages
 
 #---- Init
 load_dotenv()
-current_branch = "PROD"
+current_branch = "DEV"
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
@@ -143,6 +144,16 @@ async def arbitrages(ctx):
             await ctx.send("No arbitrages found.")
     else:
         await ctx.send("No arbitrages found.")
+
+@bot.command()
+async def glitches(ctx):
+    glitches = db.table("glitches").select("*").execute()
+    if len(glitches.data) > 0:
+        table = await format_glitches(glitches.data)
+        message = f"```ansi\n{table}\n```"
+        await ctx.send(message)
+    else:
+            await ctx.send("No glitches found.")
  
 
 #=== End of Bot Commands ====

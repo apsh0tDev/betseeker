@@ -18,7 +18,7 @@ async def call_all_markets():
     asyncio.gather(*tasks)
 
 async def get_market(market_name):
-    regular_types = ["SET_TWO_WINNER", "SET_THREE_WINNER"]
+    regular_types = ["SET_TWO_WINNER", "SET_THREE_WINNER", "MONEYLINE"]
 
     if market_name in regular_types:
         await regular_odds(market_name)
@@ -88,14 +88,14 @@ async def calculate_arbitrage(odds, market):
                 if teamA_odds is not None and (best_odds_teamA is None or teamA_odds > best_odds_teamA['decimalOdds']):
                     best_odds_teamA = {
                         'source': odds['source'],
-                        'decimalOdds': round(teamA_odds, 2),
+                        'decimalOdds': round(float(teamA_odds), 2),
                         'isOpen' : odds['isOpen']
                     }
 
                 if teamB_odds is not None and (best_odds_teamB is None or teamB_odds > best_odds_teamB['decimalOdds']):
                     best_odds_teamB = {
                         'source': odds['source'],
-                        'decimalOdds': round(teamB_odds, 2),
+                        'decimalOdds': round(float(teamB_odds), 2),
                         'isOpen' : odds['isOpen']
                     }
 

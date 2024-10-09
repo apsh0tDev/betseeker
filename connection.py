@@ -2,6 +2,7 @@ import os
 import json
 import aiohttp
 import requests
+from fp.fp import FreeProxy
 from rich import print
 from loguru import logger
 from dotenv import load_dotenv
@@ -45,7 +46,7 @@ async def get_token(site):
             key = os.getenv("DRAFTKINGS_SAT")
         case "FANDUEL":
             #key = "3694aae01a234cdabae7356992e80919"
-            key = "2ca495c3c40d4af98c94509626c5aafe"
+            key = "2b1586e4cdc64bf89f7da099443c5b7d"
             
     return key
 
@@ -64,5 +65,14 @@ async def scrape_by_site(url, site, headless):
     except Exception as e:
         print(e)
         await notification(f"{site} // {e}")
-        return None  
+        return None
+
+def get_proxy():
+    with open('flagged.txt', 'r') as f:
+        flagged_proxies = [line.strip() for line in f]
+
+    while True:
+        proxy = FreeProxy(country_id=['US', 'CA']).get()
+        if proxy not in flagged_proxies:
+            return proxy
         

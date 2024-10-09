@@ -45,10 +45,14 @@ async def scrape_scores_data(site, sport):
         else:
             is_valid = await verifier(response)
             if is_valid:
+                #TODO JSON ENCODER
                 await tidy_up_365scores(response['solution']['response'])
             else:
                 logger.error(f"Invalid response - {Site.SCORES365.value}")
 
+async def scrape_all():
+    tasks = [scrape_scores_data(Site.SCORES365, 'tennis'), scrape_scores_data(Site.SOFASCORE, 'tennis')]
+    await asyncio.gather(*tasks)
+
 if __name__ == "__main__":
-    asyncio.run(scrape_scores_data(Site.SCORES365, 'tennis'))
-    asyncio.run(scrape_scores_data(Site.SOFASCORE, 'tennis'))
+    scrape_all()

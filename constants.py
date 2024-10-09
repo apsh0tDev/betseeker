@@ -35,3 +35,39 @@ betmgm_events = "https://sports.ny.betmgm.com/cds-api/bettingoffer/fixture-view?
 pointsbet_competitions_url = "https://api.rw.pointsbet.com/api/v2/sports/{sport}/competitions"
 pointsbet_url = "https://api.rw.pointsbet.com/api/v2/competitions/{competitionId}/events/featured?includeLive=true&page=1"
 pointsbet_event_url = "https://api.rw.pointsbet.com/api/mes/v3/events/{eventId}"
+
+#Draftkings
+draftkings_live_url = "https://sportsbook-nash.draftkings.com/api/sportscontent/views/dkusva//v1/sports/{sportId}/live"
+draftkings_group = "https://sportsbook-nash.draftkings.com/api/sportscontent/dkusva/v1/leagues/{id}"
+draftkings_markets = "https://sportsbook-nash-usva.draftkings.com/sites/US-VA-SB/api/v5/eventgroups/{tournament_id}/categories/{market_id}?format=json"
+draftkings_event = "https://sportsbook-nash.draftkings.com/api/sportscontent/dkusva/v1/events/{eventId}/categories?appname=web"
+draftkings_tournaments = "https://sportsbook-nash.draftkings.com/api/sportscontent/navigation/dkusva/v2/nav/sports/{sportId}?format=json"
+
+
+#------ DATA TYPES
+POINTSBET_DATA = {
+    'cmd': 'request.get',
+    'browser': [
+        {
+            'name': 'chrome',
+        },
+    ],
+    'noDriver': True,
+    'proxyCountry': 'UnitedStates',
+    'automaticallySolveCaptchas': True,
+}
+
+FANDUEL_DATA = {
+    'cmd': 'request.get',
+    'proxyCountry' : 'UnitedStates'
+}
+
+BETMGM_DATA = {
+    'cmd' : 'request.get',
+    'requestType' : 'request'
+}
+
+DRAFTKINGS_DATA = {
+    'cmd': 'request.get',
+    'proxyCountry': 'UnitedStates',
+}

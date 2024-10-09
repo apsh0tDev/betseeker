@@ -19,35 +19,17 @@ async def running():
     ]
     await asyncio.gather(*tasks)
 
-async def line_scrapers():
-    tasks = [
-        scrapers.scrape_events(Site.FANDUEL.value, True, "tennis"),
-        scrapers.scrape_events(Site.BETMGM.value, False, "tennis")
-    ]
-    await asyncio.gather(*tasks)
-
-async def data_scrapers():
-    print("--------- RUNNING GENERAL DATA SCRAPERS ---------")
-    tasks = [
-        scrapers.scrape_data(Site.FANDUEL.value, True, "tennis"),
-        scrapers.scrape_data(Site.BETMGM.value, False, "tennis")
-    ]
-    await asyncio.gather(*tasks)
 
 job_defaults = {
     'coalesce': False,
-    'max_instances': 10
+    'max_instances': 100,
 }
 scheduler.configure(job_defaults=job_defaults)
 scheduler.add_job(running, 'interval', seconds=40)
-scheduler.add_job(line_scrapers, 'interval', seconds=40)
-scheduler.add_job(data_scrapers, 'interval', minutes=2)
+
 
 try:
     scheduler.start()
     asyncio.get_event_loop().run_forever()
 except (KeyboardInterrupt, SystemExit):
     pass
-
-"""if __name__ == "__main__":
-    asyncio.run(data_scrapers())"""

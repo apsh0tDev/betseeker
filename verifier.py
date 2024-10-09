@@ -2,7 +2,7 @@ from loguru import logger
 
 async def verifier(value):
     if value != None and 'solution' in value and 'verified' in value['solution'] and value['solution']['verified'] == True and 'response' in value['solution']:
-        if "<title>Just a moment...</title>" not in value['solution']['response'] and "Request blocked" not in value['solution']['response'] and "Sorry, you have been blocked" not in value['solution']['response']:
+        if "<title>Just a moment...</title>" not in value['solution']['response'] and "Request blocked" not in value['solution']['response'] and "Sorry, you have been blocked" not in value['solution']['response'] and 'Access Denied' not in value['solution']['response']:
             return True
         else:
             logger.error("CLOUDFARE BLOCK.")

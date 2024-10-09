@@ -2,6 +2,7 @@ import re
 import pytz
 import asyncio
 from shortuuid import uuid
+from tabulate import tabulate
 from db import db
 from rich import print
 from constants import Site
@@ -11,6 +12,7 @@ from typing import List
 from thefuzz import fuzz
 from datetime import datetime, timedelta
 from db_actions import exists, update, upload
+from dev_notifier import notification
 
 
 ny_tz = pytz.timezone('America/New_York')
@@ -122,22 +124,48 @@ async def check_glitches():
     glitches_table = db.table("glitches").select("*").execute()
     
     for glitch in glitches_table.data:
+        await notification(f'Glitch for match: {glitch["match_name"]} {glitch["markets"]}')
         created_at = datetime.fromisoformat(glitch['created_at'].replace('Z', '+00:00')).astimezone(ny_tz)
-        if created_at < (datetime.now(ny_tz) - timedelta(minutes=2)):
+        if created_at < (datetime.now(ny_tz) - timedelta(minutes=4)):
             duration = datetime.now(ny_tz) - created_at  
             duration_str = str(duration).split(".")[0]
             print(f'Glitch for match: {glitch["match_name"]} {glitch["markets"]} reference: {glitch["reference"]} - has lasted: {duration_str}')
             if glitch['notification_id']:
                 print("Notification already sent. Update message")
-                """data = {
+                data = {
                     "match_name" : glitch['match_name'],
                     "markets" : glitch['markets'],
                     "notification_id" : glitch['notification_id']
                 }
-                await edit_glitch_notification(data, "FanDuel", False)"""
+                await edit_glitch_notification(data, "FanDuel", False)
 
             else:
                 await glitch_notifier(glitches=glitch['markets'], match_name=glitch['match_name'], site="FanDuel", uuID=glitch['uuID'])
+
+#---- Glitch formatter
+async def format_glitches(data):
+    header = [
+        "Match",
+        "Markets",
+        "Date",
+    ]
+    body = []
+    ny_tz = pytz.timezone('America/New_York')
+    for item in data:
+        markets = (', ').join(item['markets'])
+        utc_time = datetime.strptime(item['created_at'], '%Y-%m-%dT%H:%M:%S.%f%z')
+        ny_time = utc_time.astimezone(ny_tz)
+        created_at = ny_time.strftime('%Y-%m-%d %I:%M %p')
+        row = [
+            f"{item['match_name']}",
+            f"{markets }",
+            f"{created_at}"
+        ]
+        body.append(row)
+
+    body.insert(0, header)
+    arbs_table = tabulate(body, tablefmt="simple", headers="firstrow")
+    return(arbs_table)
 
 async def call_get_markets_every_20_seconds():
     while True:

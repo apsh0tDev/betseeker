@@ -60,8 +60,8 @@ async def edit_glitch_notification(data, site, available=True):
               lines.insert(0,"**⛔👾 Glitch opportunity ended. **")
               output = "\n".join(lines)
               await past_message.edit(content=output)
-              response = db.table("glitches").delete().eq("notification_id", data['notification_id']).execute()
-              print(response)
+              #response = db.table("glitches").delete().eq("notification_id", data['notification_id']).execute()
+              #print(response)
 
 # ------ Delays
 
