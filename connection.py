@@ -2,7 +2,6 @@ import os
 import json
 import aiohttp
 import requests
-from fp.fp import FreeProxy
 from rich import print
 from loguru import logger
 from dotenv import load_dotenv
@@ -67,12 +66,5 @@ async def scrape_by_site(url, site, headless):
         await notification(f"{site} // {e}")
         return None
 
-def get_proxy():
-    with open('flagged.txt', 'r') as f:
-        flagged_proxies = [line.strip() for line in f]
 
-    while True:
-        proxy = FreeProxy(country_id=['US', 'CA']).get()
-        if proxy not in flagged_proxies:
-            return proxy
         
