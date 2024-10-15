@@ -1,4 +1,5 @@
 import os
+import re
 import pytz
 import discord
 import asyncio
@@ -105,7 +106,7 @@ async def edit_message(arbitrage_data, close_match=False):
 
 async def format_message(arbitrage_data):
     match_name = arbitrage_data['match_name']
-    teamA_name, teamB_name = match_name.split('vs')
+    teamA_name, teamB_name = re.split(r'\s*v\s*|\s*vs\s*', match_name)
     teamA_odds = arbitrage_data['teamA']['decimalOdds']
     teamA_source = await get_source(arbitrage_data['teamA']['source']) 
     teamB_odds = arbitrage_data['teamB']['decimalOdds']

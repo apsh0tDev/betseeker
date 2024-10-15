@@ -143,7 +143,7 @@ async def clean_arbitrages():
             await edit_message(arb, True)
 
 #======== DB Actions =======
-async def db_actions(arbitrages, similarity_threshold=80):
+async def db_actions(arbitrages, similarity_threshold=70):
     arbs_table = db.table("arbitrages").select("*").execute()
     arbs_data = arbs_table.data
     
