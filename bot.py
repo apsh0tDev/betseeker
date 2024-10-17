@@ -49,6 +49,38 @@ async def on_command_error(ctx: commands.Context, error):
 
 #==== End of Bot Events =====
 
+#==== Bot Classes =====
+class ArbitrageView(discord.ui.View):
+    @discord.ui.button(label="Live", style=discord.ButtonStyle.green)
+    async def live_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        live = db.table("matches_list").select("*").execute()
+        live_names = [item['match_name'] for item in live.data]
+        arbitrages_list = []
+        if len(live.data) > 0:
+            arbitrages = db.table("arbitrages").select("*").execute()
+            if len(arbitrages.data) > 0:
+                #arbitrages_list = arbitrages.data
+                for arbitrage in arbitrages.data:
+                    if arbitrage['match_name'] not in live_names:
+                       print("Old arbitrage, skip.")
+                    else:
+                        if arbitrage['available']:
+                            arbitrages_list.append(arbitrage)
+
+                table = await format_arbitrages(arbitrages.data)
+                message = f"**Live arbitrages** ```ansi\n{table}\n```"
+                await interaction.response.send_message(message)
+            else:
+                await interaction.response.send_message("No arbitrages found for Live matches.")
+        else:
+            await interaction.response.send_message("There are no live matches at the moment.")
+
+
+    @discord.ui.button(label="Prematch", style=discord.ButtonStyle.blurple)
+    async def prematch_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message("No arbitrages found for Pre-matches.")
+#==== End of Bot Classes ====
+
 #====== Bot Commands ========
 @bot.command()
 async def commands(ctx):
@@ -133,7 +165,9 @@ async def logs(ctx, file = ''):
 
 @bot.command()
 async def arbitrages(ctx):
-    live = db.table("matches_list").select("*").execute()
+    view = ArbitrageView()
+    await ctx.send("Please choose an option:", view=view)
+    """live = db.table("matches_list").select("*").execute()
     if len(live.data) > 0:
         arbitrages = db.table("arbitrages").select("*").execute()
         if len(arbitrages.data) > 0:
@@ -143,7 +177,7 @@ async def arbitrages(ctx):
         else:
             await ctx.send("No arbitrages found.")
     else:
-        await ctx.send("No arbitrages found.")
+        await ctx.send("No arbitrages found.")"""
 
 @bot.command()
 async def glitches(ctx):
