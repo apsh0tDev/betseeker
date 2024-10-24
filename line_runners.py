@@ -8,8 +8,8 @@ async def line_scrapers():
     tasks = [
         scrapers.scrape_events(site=Site.FANDUEL.value, strict=True, sport="tennis"),
         scrapers.scrape_events(site=Site.BETMGM.value, strict=False, sport="tennis"),
-        scrapers.scrape_events(site=Site.POINTSBET.value, strict=True, sport="tennis"),
-        scrapers.scrape_events(site=Site.DRAFTKINGS.value, strict=True, sport="tennis")
+        #scrapers.scrape_events(site=Site.POINTSBET.value, strict=True, sport="tennis"),
+        #scrapers.scrape_events(site=Site.DRAFTKINGS.value, strict=True, sport="tennis")
     ]
     await asyncio.gather(*tasks)
 
@@ -18,8 +18,8 @@ async def data_scrapers():
     tasks = [
         scrapers.scrape_general(site=Site.FANDUEL.value, strict=True, sport="tennis"),
         scrapers.scrape_general(site=Site.BETMGM.value, strict=False, sport="tennis"),
-        scrapers.scrape_by_tournament(site=Site.POINTSBET.value),
-        scrapers.scrape_by_tournament(site=Site.DRAFTKINGS.value)
+        #scrapers.scrape_by_tournament(site=Site.POINTSBET.value),
+        #scrapers.scrape_by_tournament(site=Site.DRAFTKINGS.value)
     ]
     await asyncio.gather(*tasks)
 
