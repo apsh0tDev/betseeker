@@ -1,5 +1,6 @@
 from enum import Enum
 import asyncio
+from random import randint
 from typing import List
 from db import db
 from scrapingant_client import Response, ScrapingAntClient
@@ -18,20 +19,26 @@ async def add_token (token:str, count:int=10_000):
 
     return res
 
-async def get_token (update_count=0):
+async def get_token (update_count=0, token_id=None):
     table = db.table("tokens")
-    tokens = table.select("*").execute().data
+    if token_id:
+        tokens = table.select("*").eq("id", token_id).execute().data
+        
+    else:
+        tokens = table.select("*").execute().data
+        def key(x):
+            return x["id"]
+
+        tokens.sort(key=key)
+
     if not tokens: return
 
-    def key(x):
-        return x["id"]
-
-    tokens.sort(key=key)
-        
     token = tokens[0]
 
     if token["count"] <= 0:
         table.delete().eq("id", token["id"]).execute()
+        if token_id:
+            return
         token = tokens[1]
 
     if token["count"] >= 1:
@@ -43,14 +50,16 @@ class Ant:
     def __init__(self):
         self.count = None
         self.token = None
+        self.token_id = None
         self.client = None
 
     @classmethod
-    async def create(cls):
+    async def create(cls, token:dict=None):
         self = cls()
-        t = await get_token()
+        t = token if token else await get_token()
         self.count = t["count"]
         self.token = t["token"]
+        self.token_id = t["id"]
         self.client = ScrapingAntClient(token=t["token"])
         return self
 
@@ -58,6 +67,7 @@ class Ant:
         t = await get_token()
         self.count = t["count"]
         self.token = t["token"]
+        self.token_id = t["id"]
         self.client = ScrapingAntClient(token=t["token"])
 
     async def update_count(self, new_count=None):
@@ -73,7 +83,8 @@ class Ant:
         if self.count <= 0:
             await self.reset_token()
 
-    async def request(self, type:str, url:str, is_group=False, **params):
+    async def request(self, type:str, url:str, **params):
+        print("Accessing " + url + "...")
         types = {
             "general_request": self.client.general_request,
             "general_request_async": self.client.general_request_async,
@@ -90,26 +101,71 @@ class Ant:
         else:
             result:Response = func(url, **params)
 
-        if not is_group:
-            await self.update_count(self.count - 1)
+        await self.update_count(self.count - 1)
 
         return result
-        
-    async def requests_exec(self, info_list:List[dict], common:dict=None):
-        tasks = []
-        request = self.request
+    
+def mix_el (array, index1, index2):
+    new_arr = [item for item in array]
+    new_arr[index2] = array[index1]
+    new_arr[index1] = array[index2]
 
-        if len(info_list) > self.count:
-            info_list = info_list[:self.count]
+    return new_arr
+    
+class Nest:
+    def __init__(self):
+        self.tokens:List[dict] = []
+
+    @classmethod
+    async def create(cls, ant_limit=5):
+        self = cls()
+        all_tokens = db.table("tokens").select("*").limit(ant_limit).execute().data
+
+        for i in range(len(all_tokens)):
+            r1 = randint(0, len(all_tokens) - 1)
+            r2 = randint(0, len(all_tokens) - 1)
+            all_tokens = mix_el(all_tokens, r1, r2)
+
+        self.tokens = all_tokens
+
+        return self
+    
+    async def check_ants(self, ants:List[Ant]=None):
+        if not ants:
+            all_tokens = db.table("tokens").select("*").limit(len(self.tokens)).execute().data
+            for i in range(len(all_tokens)):
+                r1 = randint(0, len(all_tokens) - 1)
+                r2 = randint(0, len(all_tokens) - 1)
+                all_tokens = mix_el(all_tokens, r1, r2)
+        else:
+            all_tokens = [ { "token": ant.token, "count":ant.count, "id":ant.token_id } for ant in ants ]
+
+        self.tokens = all_tokens
+
+    async def requests(self, info_list:List[dict], common:dict=None):
+        tasks = []
+
+        if len(info_list) > len(self.tokens):
+            info_list = info_list[:len(self.tokens)]
+
+        needs_check = False
+
+        ants:List[Ant] = []
 
         for i in range(len(info_list)):
+            info, ant = [info_list[i], await Ant.create(self.tokens[i])]
             if common:
-                info_list[i].update(common)
-            
-        res:List[Response] = await asyncio.gather(*[
-            request(**info) for info in info_list
-        ])
+                info.update(common)
+            if ant.count <= 1:
+                needs_check = True
+            tasks.append(asyncio.create_task(ant.request(**info)))
 
-        await self.update_count(self.count - len(tasks))
+            ants.append(ant)
 
+        res = await asyncio.gather(*tasks)
+
+        check_arg = None if needs_check else ants
+
+        await self.check_ants(check_arg)
+        
         return res
